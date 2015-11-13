@@ -1,0 +1,7 @@
+name: PA-II
+mode: learn
+eval: auc
+stream: file.txt
+learner: pa
+loss: squared_hinge
+C: 1

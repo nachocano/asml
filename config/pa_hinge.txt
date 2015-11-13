@@ -1,0 +1,7 @@
+name: PA-I
+mode: learn
+eval: auc
+stream: file.txt
+learner: pa
+loss: hinge
+C: 1

@@ -1,0 +1,16 @@
+name: L1-LR
+mode: learn
+eval: auc
+stream: file.txt
+learner: sgd
+loss: log
+penalty: l1
+step_policy: constant
+eta0: 0.1
+average: False
+
+
+
+
+
+
