@@ -5,3 +5,4 @@ class Pipeline:
 
   def run(self):
     print 'running pipeline...'
+    self._child.next()

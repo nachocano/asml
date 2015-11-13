@@ -12,14 +12,14 @@ from app.eval.auc import AUC
 
 def main():
   parser = argparse.ArgumentParser(description='Self-Tunning Machine Learning')
-  parser.add_argument('-i', '--config_file', help='config file') 
+  parser.add_argument('-c', '--config_file', help='configuration file', required=True) 
   args = parser.parse_args()
   with open(args.config_file) as f:
     config = yaml.load(f)
 
   # for now we assume is a file, if time, we can support data
   # coming from a socket
-  data_stream = FileStream(config['stream'])
+  data_stream = FileStream(config)
   # evaluator
   eval = config['eval']
   if eval == 'auc':
@@ -39,7 +39,8 @@ def main():
   else:
     module = Predictor(config, data_stream)
   
-  evaluator.child = module
+
+  evaluator.set_child(module)
 
   # run the ML pipeline
   pipeline = Pipeline(evaluator)

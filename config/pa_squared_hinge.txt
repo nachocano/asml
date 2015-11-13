@@ -1,7 +1,9 @@
 name: PA-II
 mode: learn
 eval: auc
-stream: file.txt
+stream: dataset/train_svm
 learner: pa
 loss: squared_hinge
 C: 1
+batch_size: 100
+parser: svm
