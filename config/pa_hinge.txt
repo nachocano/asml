@@ -6,4 +6,5 @@ learner: pa
 loss: hinge
 C: 1
 batch_size: 100
+warmup_batches: 1
 parser: svm

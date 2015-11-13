@@ -7,6 +7,7 @@ from app.learner.sgd import SGD
 from app.learner.pa import PA
 from app.predict.predictor import Predictor
 from app.eval.auc import AUC
+from app.eval.rmse import RMSE
 
 
 

@@ -17,17 +17,13 @@ class FileStream:
       yield instance
 
   def _get_minibatch(self):
-    """
-    Extract a minibatch of examples, return a tuple X, y.
-    """
     data = list(itertools.islice(self._iter, self._batch_size))
     if not len(data):
-      return np.asarray([], dtype=np.float32), np.asarray([], dtype=int)
+      return np.asarray([], dtype=int), np.asarray([], dtype=int)
     X, y = zip(*data)
     return np.asarray(X, dtype=np.float32), np.asarray(y, dtype=int)
 
-  def iter_minibatches(self):
-    """Generator of minibatches."""
+  def next(self):
     X, y = self._get_minibatch()
     while len(X):
       yield X, y

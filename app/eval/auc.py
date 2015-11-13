@@ -1,10 +1,13 @@
+from sklearn.metrics import roc_curve, auc
+from eval import Eval
 
-class AUC:
+class AUC(Eval):
   def __init__(self):
-    self._child = None
+    Eval.__init__(self)
 
-  def set_child(self, value):
-    self._child = value
+  def eval(self):
+    fpr, tpr, thresholds = roc_curve(self._truth, self._preds)
+    return auc(fpr, tpr)
 
-  def next(self):
-    self._child.next()
+  def __str__(self):
+    return 'auc'
