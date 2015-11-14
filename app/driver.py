@@ -25,7 +25,7 @@ def main():
   conn_properties = read_properties(args.connection_properties)
   sql_statements = read_properties(args.sql_statements)
 
-  dao = DB(conn_properties, sql_statements)
+  dao = DB(app_properties, conn_properties, sql_statements)
 
   # for now we assume is a file, if time, we can support data
   # coming from a socket
