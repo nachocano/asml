@@ -3,13 +3,13 @@ import numpy as np
 from app.parser.svm import SVMLightParser
 
 class FileStream:
-  def __init__(self, config):
-    self._path = config['stream']
-    self._batch_size = config['batch_size']
-    if config['parser']:
+  def __init__(self, app_properties):
+    self._path = app_properties['stream']
+    self._batch_size = app_properties['batch_size']
+    if app_properties['parser']:
       self._parser = SVMLightParser()
     else:
-      raise Exception("only SVMLight format supported")
+      raise Exception("only svm format supported")
     self._iter = self._stream_data()
 
   def _stream_data(self):

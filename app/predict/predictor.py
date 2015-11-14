@@ -1,4 +1,4 @@
 
 class Predictor:
-  def __init__(self, config, child):
+  def __init__(self, app_properties, child):
     pass

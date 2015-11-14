@@ -8,37 +8,46 @@ from app.learner.pa import PA
 from app.predict.predictor import Predictor
 from app.eval.auc import AUC
 from app.eval.rmse import RMSE
+from app.dao.database import DB
 
-
+def read_properties(fd):
+  with open(fd) as f:
+    return yaml.load(f)  
 
 def main():
   parser = argparse.ArgumentParser(description='Self-Tunning Machine Learning')
-  parser.add_argument('-c', '--config_file', help='configuration file', required=True) 
+  parser.add_argument('-a', '--app_properties', help='application properties file', required=True)
+  parser.add_argument('-c', '--connection_properties', help='connection properties file', required=True)
+  parser.add_argument('-s', '--sql_statements', help='sql statements file', required=True)
   args = parser.parse_args()
-  with open(args.config_file) as f:
-    config = yaml.load(f)
+
+  app_properties = read_properties(args.app_properties)
+  conn_properties = read_properties(args.connection_properties)
+  sql_statements = read_properties(args.sql_statements)
+
+  dao = DB(conn_properties, sql_statements)
 
   # for now we assume is a file, if time, we can support data
   # coming from a socket
-  data_stream = FileStream(config)
+  data_stream = FileStream(app_properties)
   # evaluator
-  eval = config['eval']
+  eval = app_properties['eval']
   if eval == 'auc':
     evaluator = AUC()
   else:
     evaluator = RMSE()
 
   # either learn or predict
-  mode = config['mode']
+  mode = app_properties['mode']
   if mode == 'learn':
     # SGD based classifier
-    if config['learner'] == 'sgd':
-      module = SGD(config, data_stream)
+    if app_properties['learner'] == 'sgd':
+      module = SGD(app_properties, dao, data_stream)
     # or Passive Aggressive based classifier
     else:
-      module = PA(config, data_stream)
+      module = PA(app_properties, dao, data_stream)
   else:
-    module = Predictor(config, data_stream)
+    module = Predictor(app_properties, data_stream)
   
 
   evaluator.set_child(module)
