@@ -1,9 +1,4 @@
-import base64
 import psycopg2
-try:
-  import cPickle as pickle
-except:
-  import pickle
 
 class DB:
   def __init__(self, app_properties, conn_properties, sql_statements):
@@ -18,11 +13,10 @@ class DB:
       raise Exception("Unable to connect to the database")
 
 
-  def save_model(self, epoch, name, clf):
+  def save_model(self, epoch, name, model):
     print 'saving model %s' % epoch
     cur = self._conn.cursor()
-    encoded_model = base64.b64encode(pickle.dumps(clf, pickle.HIGHEST_PROTOCOL))
-    cur.execute(self._sql['save_model'], (epoch, self._name, encoded_model))
+    cur.execute(self._sql['save_model'], (epoch, self._name, model))
     self._conn.commit()
 
 

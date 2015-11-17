@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from app.model.serializer import Serializer
 
 class Learner:
   def __init__(self, app_properties, dao, child, clf):
@@ -14,7 +15,7 @@ class Learner:
     return self._warmup_batches > i
 
   def _save_model(self, i):
-    self._dao.save_model(i, self._name, self._clf)
+    self._dao.save_model(i, self._name, Serializer.serialize(self._clf))
 
   def next(self):
     for i, (X, y) in enumerate(self._child.next()):
