@@ -47,7 +47,7 @@ def main():
     else:
       module = PA(app_properties, dao, data_stream)
   else:
-    module = Predictor(app_properties, data_stream)
+    module = Predictor(app_properties, dao, data_stream)
   
 
   evaluator.set_child(module)

@@ -9,7 +9,7 @@ class Learner:
     self._dao = dao
     self._child = child
     self._clf = clf
-    self._classes = np.array([0,1])
+    self._classes = np.array(map(int, app_properties['classes'].split(',')))
 
   def _warmup(self, i):
     return self._warmup_batches > i
