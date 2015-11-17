@@ -3,6 +3,6 @@
 create table model ( 
        epoch int
      , name text 
-     , data bytea
+     , data text
      , primary key (epoch, name)
 );
