@@ -6,6 +6,6 @@ from learner import Learner
 
 class PA(Learner):
 
-  def __init__(self, app_properties, dao, child):
-    Learner.__init__(self, app_properties, dao, child, PassiveAggressiveClassifier(C=app_properties['C'], 
+  def __init__(self, app_properties, child):
+    Learner.__init__(self, app_properties, child, PassiveAggressiveClassifier(C=app_properties['C'], 
                     loss=app_properties['loss'], shuffle=False))

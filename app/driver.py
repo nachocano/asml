@@ -7,8 +7,11 @@ from app.learner.sgd import SGD
 from app.learner.pa import PA
 from app.predict.predictor import Predictor
 from app.eval.auc import AUC
-from app.eval.rmse import RMSE
+from app.eval.accuracy import Accuracy
 from app.dao.database import DB
+from app.deploy.deployer import Deployer
+from app.cache.rediscache import RedisCache
+from app.reaper.task import ReaperTask
 
 def read_properties(fd):
   with open(fd) as f:
@@ -26,34 +29,38 @@ def main():
   sql_statements = read_properties(args.sql_statements)
 
   dao = DB(app_properties, conn_properties, sql_statements)
+  reaper_task = ReaperTask(dao)
 
   # for now we assume is a file, if time, we can support data
   # coming from a socket
   data_stream = FileStream(app_properties)
   # evaluator
   eval = app_properties['eval']
-  if eval == 'auc':
-    evaluator = AUC()
+  if eval == 'accuracy':
+    evaluator = Accuracy()
   else:
-    evaluator = RMSE()
+    evaluator = AUC()
+  # cache
+  cache = RedisCache(conn_properties)
 
   # either learn or predict
   mode = app_properties['mode']
   if mode == 'learn':
     # SGD based classifier
     if app_properties['learner'] == 'sgd':
-      module = SGD(app_properties, dao, data_stream)
+      learner = SGD(app_properties, data_stream)
     # or Passive Aggressive based classifier
     else:
-      module = PA(app_properties, dao, data_stream)
+      learner = PA(app_properties, data_stream)
+    # create the deployer
+    module = Deployer(app_properties, cache, dao, evaluator, learner)
+
   else:
-    module = Predictor(app_properties, dao, data_stream)
+    module = Predictor(app_properties, cache, dao, evaluator, data_stream)
   
 
-  evaluator.set_child(module)
-
   # run the ML pipeline
-  pipeline = Pipeline(evaluator)
+  pipeline = Pipeline(module)
   pipeline.run()
   
 if __name__ == '__main__':
