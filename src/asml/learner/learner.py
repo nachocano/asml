@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from app.util.utils import Utils
+from asml.util.utils import Utils
 
 class Learner:
   def __init__(self, app_properties, child, clf):

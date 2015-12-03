@@ -1,6 +1,6 @@
 import itertools
 import numpy as np
-from app.parser.svm import SVMLightParser
+from asml.parser.svm import SVMLightParser
 
 class FileStream:
   def __init__(self, app_properties):

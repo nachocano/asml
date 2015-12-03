@@ -1,5 +1,5 @@
-from app.util.utils import Utils
-from app.model.serializer import Serializer
+from asml.util.utils import Utils
+from asml.model.serializer import Serializer
 
 class Deployer:
   def __init__(self, app_properties, cache, dao, evaluator, child):

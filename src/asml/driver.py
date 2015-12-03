@@ -1,17 +1,17 @@
 #!/usr/bin/python
 import argparse
 import yaml
-from app.pipeline import Pipeline
-from app.stream.file import FileStream
-from app.learner.sgd import SGD
-from app.learner.pa import PA
-from app.predict.predictor import Predictor
-from app.eval.auc import AUC
-from app.eval.accuracy import Accuracy
-from app.dao.database import DB
-from app.deploy.deployer import Deployer
-from app.cache.rediscache import RedisCache
-from app.reaper.task import ReaperTask
+from asml.pipeline import Pipeline
+from asml.stream.file import FileStream
+from asml.learner.sgd import SGD
+from asml.learner.pa import PA
+from asml.predict.predictor import Predictor
+from asml.eval.auc import AUC
+from asml.eval.accuracy import Accuracy
+from asml.dao.database import DB
+from asml.deploy.deployer import Deployer
+from asml.cache.rediscache import RedisCache
+from asml.reaper.task import ReaperTask
 
 def read_properties(fd):
   with open(fd) as f:

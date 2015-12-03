@@ -16,6 +16,7 @@ def main():
       cmd = 'python %s -a %s -c %s -s %s' % (args.executable, fn, args.connection_file, args.sql_statements_file)
       print cmd
       subprocess.Popen(cmd, shell=True)
+      break
    
 if __name__ == '__main__':
   main()

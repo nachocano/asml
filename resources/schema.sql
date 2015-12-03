@@ -1,4 +1,4 @@
-# createdb -U postgres stml
+# createdb -U postgres asml
 
 create table model ( 
        timestamp int
