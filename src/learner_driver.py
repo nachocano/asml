@@ -2,8 +2,7 @@
 import logging
 import argparse
 from asml.dao.database import DB
-from asml.learner.sgd import SGD
-from asml.learner.pa import PA
+from asml.learner.factory import LearnerFactory
 from asml.util.utils import Utils
 
 def main():
@@ -17,14 +16,11 @@ def main():
   db_properties = Utils.read_properties(args.db_properties)
   sql_statements = Utils.read_properties(args.sql_statements)
 
-  logging.basicConfig(filename=module_properties['log_file'], format='%(asctime)s %(levelname)-8s %(message)s', level=logging.DEBUG)
+  logging.basicConfig(filename=module_properties['log_file'], format='%(asctime)s %(message)s', level=logging.DEBUG)
 
   dao = DB(db_properties, sql_statements)
 
-  if module_properties['learner'] == 'sgd':
-    learner = SGD(module_properties, dao)
-  else:
-    learner = PA(module_properties, dao)
+  learner = LearnerFactory.new_learner(module_properties, dao)
 
   learner.run()
 
