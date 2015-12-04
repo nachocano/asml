@@ -8,9 +8,9 @@ class AUC(Eval):
     self._preds = np.array([])
     self._truth = np.array([])
 
-  def stream_eval(self, truth, pred):
+  def evaluate(self, truth, preds):
     self._truth = np.hstack((self._truth, truth))
-    self._preds = np.hstack((self._preds, pred))
+    self._preds = np.hstack((self._preds, preds))
     fpr, tpr, _ = roc_curve(self._truth, self._preds)
     return auc(fpr, tpr)
 

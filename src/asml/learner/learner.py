@@ -6,47 +6,54 @@ from asml.network.server import StreamServer
 from asml.util.utils import Utils
 from asml.model.serializer import Serializer
 from asml.parser.factory import ParserFactory
+from asml.eval.factory import EvaluatorFactory
 
 class LearnerHandler:
-  def __init__(self, client, parser, clf, classes):
+  def __init__(self, client, parser, evaluator, clf, classes, warmup_examples, id):
     self._stream_client = client
     self._parser = parser
+    self._evaluator = evaluator
+    self._current_best = self._evaluator.default()
     self._clf = clf
     self._classes = classes
+    self._warmup_examples = warmup_examples
+    self._id = id
 
   def emit(self, data):
     X, y, timestamp = self._parser.parse_feature(data)
-    #self._stream_client.emit(data)
+    # just train
+    if timestamp < self._warmup_examples:
+      # train
+      self._clf.partial_fit(X, y, classes=self._classes)
+    else:
+      # predict
+      predictions = self._clf.predict(X)
+      # then train
+      self._clf.partial_fit(X, y, classes=self._classes)
+      # evaluate
+      new_metric = self._evaluator.evaluate(y, predictions)
+      # check if we improve
+      if self._evaluator.is_better(new_metric, self._current_best):
+        self._current_best = new_metric
+        # send it to the deployer, so that he can decide if this is the overall best
+        self._stream_client.emit(['%s %s %s' % (self._id, self._current_best, timestamp)])
 
 class Learner:
   def __init__(self, module_properties, dao, clf):
-    self._name = module_properties['name']
-    self._warmup_batches = module_properties['warmup_batches']
+    self._id = module_properties['id']
+    self._warmup_examples = module_properties['warmup_examples']
     self._parser = ParserFactory.new_parser(module_properties['parser'])
+    self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
     self._dao = dao
     self._clf = clf
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
-    self._handler = LearnerHandler(self._stream_client, self._parser, self._clf, self._classes)
+    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._clf, self._classes, self._warmup_examples, self._id)
     self._processor = StreamService.Processor(self._handler)
     self._stream_server = StreamServer(module_properties, self._processor)
 
   def run(self):
     self._stream_server.start()
-    # for i, (X, y) in enumerate(self._child.next()):
-    #   # just train
-    #   if Utils.warmup(self._warmup_batches, i):
-    #     # train
-    #     self._clf.partial_fit(X, y, classes=self._classes)
-    #     yield i, self._clf
-    #   else:
-    #     # predict
-    #     predictions = self._clf.predict(X)
-    #     # then train
-    #     self._clf.partial_fit(X, y, classes=self._classes)
-    #     # return ground truth, predictions and model
-    #     yield i, self._clf, y, predictions
-
 
   def _save_model(self, timestamp, clf):
     self._dao.save_model(timestamp, self._name, Serializer.serialize(clf), self._current_eval)

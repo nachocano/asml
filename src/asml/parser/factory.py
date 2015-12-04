@@ -6,4 +6,5 @@ class ParserFactory:
   def new_parser(cls, parser):
     if parser == 'criteo':
       return CriteoParser()
-    raise ValueException('invalid parser %s' % value)
+    else:
+      raise ValueException('invalid parser %s' % value)

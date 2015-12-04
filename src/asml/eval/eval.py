@@ -4,7 +4,7 @@ class Eval:
   __metaclass__ = abc.ABCMeta
 
   @abc.abstractmethod
-  def stream_eval(self, truth, pred):
+  def evaluate(self, truth, pred):
     return
 
   def default(self):
