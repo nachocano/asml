@@ -5,7 +5,7 @@ from sklearn.linear_model import SGDClassifier
 from learner import Learner
 
 class SGD(Learner):
-  def __init__(self, app_properties, child):
-    Learner.__init__(self, app_properties, child, SGDClassifier(loss=app_properties['loss'], penalty=app_properties['penalty'],
-                    learning_rate=app_properties['step_policy'], eta0=app_properties['eta0'], average=app_properties['average'],
+  def __init__(self, module_properties):
+    Learner.__init__(self, module_properties, SGDClassifier(loss=module_properties['loss'], penalty=module_properties['penalty'],
+                    learning_rate=module_properties['step_policy'], eta0=module_properties['eta0'], average=module_properties['average'],
                     shuffle=False))

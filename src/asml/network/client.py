@@ -27,6 +27,7 @@ class StreamClient:
       client = StreamService.Client(protocol)
       # Connect!
       transport.open()
+      print 'connected to server in %s:%s' % (host, port)
       return transport, client
 
     except Thrift.TException as tx:
@@ -42,6 +43,5 @@ class StreamClient:
   def close():
     for conn in self._connections:
       trans = self._connections[conn][0]
-      if transport.isOpen():
-        print 'closing connection to %s' % str(conn)
-        transport.close()
+      print 'closing connection to %s' % str(conn)
+      transport.close()
