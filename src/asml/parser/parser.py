@@ -1,5 +1,6 @@
 import abc
 from scipy import sparse
+import numpy as np
 
 class Parser:
   __metaclass__ = abc.ABCMeta
@@ -12,17 +13,21 @@ class Parser:
   def parse_raw(self, data):
     return
 
-  def parse_feature(self, N, d, data):
-    row = []
-    column = []
-    value = []
-    for i, example in enumerate(data):
-      d = example.split(' ')
-      label = int(d[0])
-      nelems = len(d[1:])
-      row.extend([i] * nelems)
-      for elem in d[1:]:
+  def parse_feature(self, data):
+    labels, row, column, value = [], [], [], []
+    timestamp = -1
+    N = len(data) - 1
+    d = int(data[0])
+    for i in xrange(1,len(data)):
+      example = data[i].split(' ')
+      timestamp = long(example[0])
+      labels.append(int(example[1]))
+      nelems = len(example[2:])
+      row.extend([i-1] * nelems)
+      for elem in example[2:]:
         col, val = elem.split(':')
-        column.append(col)
-        value.append(val)
-    return sparse.csr_matrix((value, (row, column)), shape=(N, d))
+        column.append(int(col))
+        value.append(int(val))
+    X = sparse.csr_matrix((value, (row, column)), shape=(len(data)-1, d))
+    y = np.array(labels)
+    return X, y, timestamp

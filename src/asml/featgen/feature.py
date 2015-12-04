@@ -10,7 +10,7 @@ class FeatureGeneratorHandler:
 
   def emit(self, data):
     features = self._parser.parse_raw(data)
-    # save them into the db...
+    # TODO save them into the db...
     self._stream_client.emit(features)
 
 class FeatureGenerator:

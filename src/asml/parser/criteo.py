@@ -14,6 +14,8 @@ class CriteoParser(Parser):
 
   def parse_raw(self, data):
     features = []
+    # send the number of dimensions as the first element
+    features.append('%s' % self._m)
     for line in data:
       values = self._get_values(line)
       # 0 = timestamp
