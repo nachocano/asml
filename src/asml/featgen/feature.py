@@ -9,9 +9,9 @@ class FeatureGeneratorHandler:
     self._parser = parser
 
   def emit(self, data):
-    print(data)
-    print self._parser.parse_raw(data)
-    self._stream_client.emit(data)
+    features = self._parser.parse_raw(data)
+    # save them into the db...
+    self._stream_client.emit(features)
 
 class FeatureGenerator:
   def __init__(self, module_properties):
