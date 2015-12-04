@@ -1,16 +1,19 @@
+import gzip
 import itertools
 import numpy as np
 from asml.network.client import StreamClient
+from asml.parser.factory import ParserFactory
 
 class FileStream:
   def __init__(self, module_properties):
     self._path = module_properties['filename']
     self._batch_size = module_properties['batch_size']
+    self._parser = ParserFactory.new_parser(module_properties['parser'])
     self._stream_client = StreamClient(module_properties)
     self._iter = self._stream_data()
 
   def _stream_data(self):
-    for line in open(self._path, 'r'):
+    for line in self._parser.parse_stream(gzip.open(self._path, 'rb')):
       yield line
 
   def _get_minibatch(self):

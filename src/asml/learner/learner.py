@@ -7,8 +7,10 @@ from asml.util.utils import Utils
 from asml.model.serializer import Serializer
 
 class LearnerHandler:
-  def __init__(self, client):
+  def __init__(self, client, clf, classes):
     self._stream_client = client
+    self._clf = clf
+    self._classes = classes
 
   def emit(self, data):
     print data
@@ -22,7 +24,8 @@ class Learner:
     self._clf = clf
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
-    self._processor = StreamService.Processor(LearnerHandler(self._stream_client))
+    self._handler = LearnerHandler(self._stream_client, self._clf, self._classes)
+    self._processor = StreamService.Processor(self._handler)
     self._stream_server = StreamServer(module_properties, self._processor)
 
   def run(self):
@@ -42,5 +45,5 @@ class Learner:
     #     yield i, self._clf, y, predictions
 
 
-    def _save_model(self, timestamp, clf):
-      self._dao.save_model(timestamp, self._name, Serializer.serialize(clf), self._current_eval)
+  def _save_model(self, timestamp, clf):
+    self._dao.save_model(timestamp, self._name, Serializer.serialize(clf), self._current_eval)
