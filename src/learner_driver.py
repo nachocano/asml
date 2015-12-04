@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import logging
 import argparse
 from asml.dao.database import DB
 from asml.learner.sgd import SGD
@@ -15,6 +16,8 @@ def main():
   module_properties = Utils.read_properties(args.module_properties)
   db_properties = Utils.read_properties(args.db_properties)
   sql_statements = Utils.read_properties(args.sql_statements)
+
+  logging.basicConfig(filename=module_properties['log_file'], format='%(asctime)s %(levelname)-8s %(message)s', level=logging.DEBUG)
 
   dao = DB(db_properties, sql_statements)
 

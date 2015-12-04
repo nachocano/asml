@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 from asml.autogen.asml import StreamService
@@ -32,6 +33,8 @@ class LearnerHandler:
       self._clf.partial_fit(X, y, classes=self._classes)
       # evaluate
       new_metric = self._evaluator.evaluate(y, predictions)
+
+      logging.debug('timestamp:%s %s:%s', timestamp, str(self._evaluator), new_metric)
       # check if we improve
       if self._evaluator.is_better(new_metric, self._current_best):
         self._current_best = new_metric

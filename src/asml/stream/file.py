@@ -1,3 +1,4 @@
+import logging
 import gzip
 import itertools
 import numpy as np
@@ -27,4 +28,4 @@ class FileStream:
     while len(data):
       self._stream_client.emit(data)
       data = self._get_minibatch()
-    print 'no more data...'
+    logging.info('no more data...')
