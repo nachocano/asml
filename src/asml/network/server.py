@@ -10,7 +10,10 @@ class StreamServer:
       self._transport = TSocket.TServerSocket(port=self._portno)
       tfactory = TTransport.TBufferedTransportFactory()
       pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-      self._server = TServer.TSimpleServer(processor, self._transport, tfactory, pfactory)
+      if module_properties['multi_threading']:
+        self._server = TServer.TThreadedServer(processor, self._transport, tfactory, pfactory)
+      else:
+        self._server = TServer.TSimpleServer(processor, self._transport, tfactory, pfactory)
     except Exception, ex:
       print(('streamserver exc: %s' % (ex.message)))
 
