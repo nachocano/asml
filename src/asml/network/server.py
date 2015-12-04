@@ -22,7 +22,7 @@ class StreamServer:
        print "quitting from keyboard interrupt"
        self._transport.close()
     except Exception, ex:
-      print(('streamserver exc: %s' % (ex.message)))
+      print(('could not start server, streamserver exc: %s' % (ex.message)))
 
   def stop(self):
     print('stopping the service...')

@@ -12,7 +12,7 @@ class LearnerHandler:
 
   def emit(self, data):
     print data
-    #self._stream_client.emit(data)
+    self._stream_client.emit(data)
 
 class Learner:
   def __init__(self, module_properties, dao, clf):
