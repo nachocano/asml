@@ -13,8 +13,8 @@ class DB:
       exit(1)
 
 
-  def save_model(self, timestamp, name, model, metric):
-    print 'saving model %s' % timestamp
+  def save_model(self, timestamp, id, model, metric):
+    print 'saving model %s at %s' % (timestamp, id)
     cur = self._conn.cursor()
-    cur.execute(self._sql['save_model'], (timestamp, name, model, metric))
+    cur.execute(self._sql['save_model'], (timestamp, id, model, metric))
     self._conn.commit()

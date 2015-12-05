@@ -5,15 +5,15 @@ from asml.autogen.asml import StreamService
 from asml.network.client import StreamClient
 from asml.network.server import StreamServer
 from asml.util.utils import Utils
-from asml.model.serializer import Serializer
 from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
 
 class LearnerHandler:
-  def __init__(self, client, parser, evaluator, clf, classes, warmup_examples, id):
+  def __init__(self, client, parser, evaluator, dao, clf, classes, warmup_examples, id):
     self._stream_client = client
     self._parser = parser
     self._evaluator = evaluator
+    self._dao = dao
     self._current_best = self._evaluator.default()
     self._clf = clf
     self._classes = classes
@@ -34,10 +34,12 @@ class LearnerHandler:
       # evaluate
       new_metric = self._evaluator.evaluate(y, predictions)
 
-      logging.debug('timestamp:%s %s:%s', timestamp, str(self._evaluator), new_metric)
-      # check if we improve
-      if self._evaluator.is_better(new_metric, self._current_best):
+      logging.debug('%s:%s', timestamp, new_metric)
+      # check if we improve 
+      if self._evaluator.is_better_or_equal(new_metric, self._current_best):
         self._current_best = new_metric
+        # persist the current best
+        self._dao.save_model(timestamp, self._id, Utils.serialize(self._clf), new_metric)
         # send it to the deployer, so that he can decide if this is the overall best
         self._stream_client.emit(['%s %s %s' % (self._id, self._current_best, timestamp)])
 
@@ -51,7 +53,7 @@ class Learner:
     self._clf = clf
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
-    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._clf, self._classes, self._warmup_examples, self._id)
+    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._classes, self._warmup_examples, self._id)
     self._processor = StreamService.Processor(self._handler)
     self._stream_server = StreamServer(module_properties, self._processor)
 
