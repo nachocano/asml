@@ -2,7 +2,7 @@ import logging
 import gzip
 import itertools
 import numpy as np
-from asml.network.client import StreamClient
+from asml.network.stream import StreamClient
 from asml.parser.factory import ParserFactory
 
 class FileStream:
@@ -24,6 +24,7 @@ class FileStream:
     return list(data)
 
   def run(self):
+    self._stream_client.open()
     data = self._get_minibatch()
     while len(data):
       self._stream_client.emit(data)

@@ -1,9 +1,9 @@
 import logging
 import numpy as np
 
-from asml.autogen.asml import StreamService
-from asml.network.client import StreamClient
-from asml.network.server import StreamServer
+from asml.autogen.services import StreamService
+from asml.network.stream import StreamClient
+from asml.network.server import Server
 from asml.util.utils import Utils
 from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
@@ -55,10 +55,8 @@ class Learner:
     self._stream_client = StreamClient(module_properties)
     self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._classes, self._warmup_examples, self._id)
     self._processor = StreamService.Processor(self._handler)
-    self._stream_server = StreamServer(module_properties, self._processor)
+    self._stream_server = Server(module_properties, self._processor)
 
   def run(self):
+    self._stream_client.open()
     self._stream_server.start()
-
-  def _save_model(self, timestamp, clf):
-    self._dao.save_model(timestamp, self._name, Serializer.serialize(clf), self._current_eval)

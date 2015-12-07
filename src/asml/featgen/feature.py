@@ -1,6 +1,6 @@
-from asml.autogen.asml import StreamService
-from asml.network.client import StreamClient
-from asml.network.server import StreamServer
+from asml.autogen.services import StreamService
+from asml.network.stream import StreamClient
+from asml.network.server import Server
 from asml.parser.factory import ParserFactory
 
 class FeatureGeneratorHandler:
@@ -18,7 +18,8 @@ class FeatureGenerator:
     self._parser = ParserFactory.new_parser(module_properties['parser'])
     self._stream_client = StreamClient(module_properties)
     self._processor = StreamService.Processor(FeatureGeneratorHandler(self._stream_client, self._parser))
-    self._stream_server = StreamServer(module_properties, self._processor)
+    self._stream_server = Server(module_properties, self._processor)
 
   def run(self):
+    self._stream_client.open()
     self._stream_server.start()

@@ -1,47 +1,47 @@
-from asml.autogen.asml import StreamService
-from asml.autogen.asml.ttypes import *
-
+import abc
 from thrift import Thrift
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
 
-class StreamClient:
-  def __init__(self, module_properties):
-    self._connections = {}
-    for address in module_properties['downstream_addresses'].split(','):
-      host, port = address.split(':')
-      port = int(port)
-      self._connections[(host, port)] = self.open(host, port)
-
-  def open(self, host, port):
+class Client:
+  __metaclass__ = abc.ABCMeta
+  
+  def __init__(self, addresses):
+    self._clients = {}
+    self._transports = {}
+    self._protocols = {}
     try:
-      # Make socket
-      transport = TSocket.TSocket(host, port)
-      # Buffering is critical. Raw sockets are very slow
-      transport = TTransport.TBufferedTransport(transport)
-      # Wrap in a protocol
-      protocol = TBinaryProtocol.TBinaryProtocol(transport)
-      # Create a client to use the protocol encoder
-      client = StreamService.Client(protocol)
-      # Connect!
-      transport.open()
-      print 'connected to server in %s:%s' % (host, port)
-      return transport, client
-
+      for address in addresses.split(','):
+        host, port = address.split(':')
+        port = int(port)
+        transport = TSocket.TSocket(host, port)
+        transport = TTransport.TBufferedTransport(transport)
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+        self._transports[(host, port)] = transport
+        self._protocols[(host, port)] = protocol
     except Thrift.TException as tx:
-      print(('streamclient exc: %s' % (tx.message)))
-      #exit(1)
+      print(('client exc: %s' % (tx.message)))
 
-  def emit(self, data):
-    for conn in self._connections:
-      client = self._connections[conn][1]
-      print 'emitting data to %s' % str(conn)
-      client.emit(data)
+  def open(self):
+    for key in self._protocols:
+      self._clients[key] = self.create_client(self._protocols[key])
+      try:
+        self._transports[key].open()
+        print 'connected to %s' % str(key)
+      except Thrift.TException as tx:
+        print(('client exc: %s' % (tx.message)))
 
   def close():
-    for conn in self._connections:
-      trans = self._connections[conn][0]
-      print 'closing connection to %s' % str(conn)
+    for key in self._transports:
+      transport = self._transports[key]
+      print 'closing connection to %s' % str(key)
       transport.close()
+
+  def get_clients(self):
+    return self._clients
+
+  @abc.abstractmethod
+  def create_client(self, protocol):
+    return

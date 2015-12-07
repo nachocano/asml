@@ -3,7 +3,7 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
-class StreamServer:
+class Server:
   def __init__(self, module_properties, processor):
     self._portno = module_properties['server_port']
     try:
@@ -15,7 +15,7 @@ class StreamServer:
       else:
         self._server = TServer.TSimpleServer(processor, self._transport, tfactory, pfactory)
     except Exception, ex:
-      print(('streamserver exc: %s' % (ex.message)))
+      print(('server exc: %s' % (ex.message)))
 
   def start(self):
     try:
@@ -25,7 +25,7 @@ class StreamServer:
        print "quitting from keyboard interrupt"
        self._transport.close()
     except Exception, ex:
-      print(('could not start server, streamserver exc: %s' % (ex.message)))
+      print(('could not start server, server exc: %s' % (ex.message)))
 
   def stop(self):
     print('stopping the service...')

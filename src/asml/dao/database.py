@@ -14,7 +14,7 @@ class DB:
 
 
   def save_model(self, timestamp, id, model, metric):
-    print 'saving model %s at %s' % (timestamp, id)
+    print 'saving model %s at %s' % (id, timestamp)
     cur = self._conn.cursor()
-    cur.execute(self._sql['save_model'], (timestamp, id, model, metric))
+    cur.execute(self._sql['save_model'], (long(timestamp), id, model, float(metric)))
     self._conn.commit()
