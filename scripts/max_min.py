@@ -31,7 +31,7 @@ for fi in os.listdir(args.input_folder):
     gzipped = os.path.join(args.input_folder, fi)
     f = gzip.open(gzipped, 'r')
     start = time.time()
-    print 'processing file %s' % f
+    print 'processing file %s' % gzipped
     for ii, line in read_lines(f):
       if ii % 100000 == 0:
         print "processing %d of file %s" % (ii, gzipped)
@@ -48,7 +48,7 @@ for fi in os.listdir(args.input_folder):
             integer_features_max[i] = int(i_feat)
           if int(i_feat) < integer_features_min[i]:
             integer_features_min[i] = int(i_feat)
-    print 'file %s processed in %s' % (fi, time.time() - start)
+    print 'file %s processed in %s' % (gzipped, time.time() - start)
 
 print "max and mins..."
 for i in xrange(num_int_features):
