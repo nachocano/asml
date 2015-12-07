@@ -34,7 +34,7 @@ for fi in os.listdir(args.input_folder):
     print 'processing file %s' % f
     for ii, line in read_lines(f):
       if ii % 100000 == 0:
-        print "processing %d of file %s" % (ii, f)
+        print "processing %d of file %s" % (ii, gzipped)
       values = get_values(line)
       i_features = None
       # have the labels
