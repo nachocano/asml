@@ -21,7 +21,7 @@ class DeployerHandler:
       if self._evaluator.is_better(metric, self._bests[timestamp]):
         self._bests[timestamp] = metric
         print 'best at %s is %s with %s' % (timestamp, id, metric)
-        #self._notif_client.best_model(id, timestamp)
+        self._notification_client.best_model(id, timestamp)
 
 class Deployer:
   def __init__(self, module_properties):
