@@ -16,20 +16,23 @@ class DeployerHandler:
     self._lock = threading.Lock()
     
   def emit(self, data):
-    id, metric, timestamp = data[0].split(' ')
-    metric = float(metric)
-    with self._lock:
-      if long(timestamp) < self._warmup_examples:
-        if self._evaluator.is_better(metric, self._best_warmup):
-          self._best_warmup = metric
-          print 'best warmup at %s is %s with %s' % (timestamp, id, metric)
-          self._notification_client.best_model(id, timestamp)
-      else:
-        # check if we have a better one, and notify the predictor
-        if self._evaluator.is_better(metric, self._bests[timestamp]):
-          self._bests[timestamp] = metric
-          print 'best at %s is %s with %s' % (timestamp, id, metric)
-          self._notification_client.best_model(id, timestamp)
+    try:    
+      id, metric, timestamp = data[0].split(' ')
+      metric = float(metric)
+      with self._lock:
+        if long(timestamp) < self._warmup_examples:
+          if self._evaluator.is_better(metric, self._best_warmup):
+            self._best_warmup = metric
+            print 'best warmup at %s is %s with %s' % (timestamp, id, metric)
+            self._notification_client.best_model(id, timestamp)
+        else:
+          # check if we have a better one, and notify the predictor
+          if self._evaluator.is_better(metric, self._bests[timestamp]):
+            self._bests[timestamp] = metric
+            print 'best at %s is %s with %s' % (timestamp, id, metric)
+            self._notification_client.best_model(id, timestamp)
+    except Exception, ex:
+      print 'ex %s' % ex.message            
 
 class Deployer:
   def __init__(self, module_properties):

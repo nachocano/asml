@@ -13,5 +13,8 @@ class StreamClient(Client):
   def emit(self, data):
     clients = self.get_clients()
     for key in clients:
-      print 'emitting data to %s' % str(key)
-      clients[key].emit(data)
+      try:
+        print 'emitting data to %s' % str(key)
+        clients[key].emit(data)
+      except Exception, ex:
+        print(('exc while emitting: %s' % (ex.message)))
