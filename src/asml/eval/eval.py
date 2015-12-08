@@ -7,6 +7,10 @@ class Eval:
   def evaluate(self, truth, pred):
     return
 
+  @abc.abstractmethod
+  def stream_evaluate(self, truth, pred):
+    return
+
   def default(self):
     return 0.0
 

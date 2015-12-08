@@ -1,4 +1,5 @@
 from parser import Parser
+import gzip
 
 class CriteoParser(Parser):
   
@@ -7,6 +8,15 @@ class CriteoParser(Parser):
     self._no_count_feat = 13
     self._no_cat_feat = 26
     self._m = m
+
+  def parse(self, filename):
+    features = []
+    # send the number of dimensions as the first element
+    features.append('%s' % self._m)
+    for i, line in enumerate(gzip.open(filename, 'rb')):
+      line = '%s\t%s' % (i, line)
+      features.append(self._parse_line(line))
+    return self.parse_feature(features)
 
   def parse_stream(self, fd):
     for i, line in enumerate(fd):
@@ -17,26 +27,30 @@ class CriteoParser(Parser):
     # send the number of dimensions as the first element
     features.append('%s' % self._m)
     for line in data:
-      values = self._get_values(line)
-      # 0 = timestamp
-      # 1 = label
-      # [2:15] count features (13)
-      count_features = values[2:self._no_count_feat+2]
-      # [15:] categorical features (26)
-      cat_features = values[self._no_count_feat+2:]
-
-      hashed_features = {}
-      for i, cat_feature in enumerate(cat_features):
-        if cat_feature != '':
-          self._update_feature(cat_feature, 1, hashed_features, self._m)
-
-      categories = []
-      for key in sorted(hashed_features):
-        categories.append('%s:%s' % (key, hashed_features[key]))
-      categories_as_str = ' '.join(c for c in categories)
-      # timestamp, label, categories
-      features.append('%s %s %s' % (values[0], values[1], categories_as_str))
+      features.append(self._parse_line(line))
     return features
+
+  def _parse_line(self, line):
+    values = self._get_values(line)
+    # 0 = timestamp
+    # 1 = label
+    # [2:15] count features (13)
+    count_features = values[2:self._no_count_feat+2]
+    # [15:] categorical features (26)
+    cat_features = values[self._no_count_feat+2:]
+
+    hashed_features = {}
+    for i, cat_feature in enumerate(cat_features):
+      if cat_feature != '':
+        self._update_feature(cat_feature, 1, hashed_features, self._m)
+
+    categories = []
+    for key in sorted(hashed_features):
+      categories.append('%s:%s' % (key, hashed_features[key]))
+    categories_as_str = ' '.join(c for c in categories)
+    # timestamp, label, categories
+    parsed_line = '%s %s %s' % (values[0], values[1], categories_as_str)
+    return parsed_line
 
   def _get_values(self, line):
     values = line.split('\t')

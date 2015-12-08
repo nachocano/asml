@@ -6,6 +6,10 @@ class Parser:
   __metaclass__ = abc.ABCMeta
 
   @abc.abstractmethod
+  def parse(self, filename):
+    return
+
+  @abc.abstractmethod
   def parse_stream(self, fd):
     return
 

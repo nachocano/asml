@@ -7,10 +7,13 @@ class Accuracy(Eval):
     self._correct = 0
     self._instances = 0
 
-  def evaluate(self, truth, pred):
+  def stream_evaluate(self, truth, pred):
     self._correct += np.sum(truth == pred)
     self._instances += truth.shape[0]
     return float(self._correct) / self._instances
+
+  def evaluate(self, truth, pred):
+    return float(np.sum(truth == pred)) / truth.shape[0]
 
   def __str__(self):
     return 'accuracy'
