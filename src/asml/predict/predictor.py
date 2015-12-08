@@ -8,14 +8,14 @@ class PredictorStreamHandler:
   #   pass
 
   def emit(self, data):
-    print data
+    print "streaming"
 
 class PredictorNotificationHandler:
   #def __init__(self):
   #   pass
 
-  def best_model(id, timestamp):
-    print "predictor %s, %s" % (id, timestamp)
+  def best_model(self, id, timestamp):
+    print "BEST MODELLLLL %s, %s" % (id, timestamp)
 
 
 class Predictor:
@@ -29,7 +29,6 @@ class Predictor:
 
   def _init_stream(self):
     self._stream_server.start()
-
 
   def run(self):
     thread = Thread(target = self._init_stream)
