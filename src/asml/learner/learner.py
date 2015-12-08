@@ -4,7 +4,6 @@ import numpy as np
 from asml.autogen.services import StreamService
 from asml.network.stream import StreamClient
 from asml.network.server import Server
-from asml.util.utils import Utils
 from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
 
@@ -22,26 +21,31 @@ class LearnerHandler:
 
   def emit(self, data):
     X, y, timestamp = self._parser.parse_feature(data)
-    # just train
     if timestamp < self._warmup_examples:
       # train
       self._clf.partial_fit(X, y, classes=self._classes)
+      # predict (so that we can have a warmed up model)
+      # the predictor should not predict in the warming phase
+      predictions = self._clf.predict(X)
     else:
-      # predict
+      # predict (regular case)
       predictions = self._clf.predict(X)
       # then train
       self._clf.partial_fit(X, y, classes=self._classes)
-      # evaluate
-      new_metric = self._evaluator.evaluate(y, predictions)
 
+    # evaluate
+    new_metric = self._evaluator.evaluate(y, predictions)
+
+    if timestamp >= self._warmup_examples:
       logging.debug('%s:%s', timestamp, new_metric)
-      # check if we improve 
-      if self._evaluator.is_better_or_equal(new_metric, self._current_best):
-        self._current_best = new_metric
-        # persist the current best
-        self._dao.save_model(timestamp, self._id, Utils.serialize(self._clf), new_metric)
-        # send it to the deployer, so that he can decide if this is the overall best
-        self._stream_client.emit(['%s %s %s' % (self._id, self._current_best, timestamp)])
+    
+    # check if we improve
+    if self._evaluator.is_better_or_equal(new_metric, self._current_best):
+      self._current_best = new_metric
+      # persist the current best
+      self._dao.save_model(timestamp, self._id, self._clf, new_metric)
+      # send it to the deployer, so that he can decide if this is the overall best
+      self._stream_client.emit(['%s %s %s' % (self._id, self._current_best, timestamp)])
 
 class Learner:
   def __init__(self, module_properties, dao, clf):

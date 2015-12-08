@@ -1,4 +1,5 @@
 import psycopg2
+from asml.util.utils import Utils
 
 class DB:
   def __init__(self, db_properties, sql_statements):
@@ -12,9 +13,21 @@ class DB:
       raise Exception("Unable to connect to the database")
       exit(1)
 
-
   def save_model(self, timestamp, id, model, metric):
     print 'saving model %s at %s' % (id, timestamp)
     cur = self._conn.cursor()
-    cur.execute(self._sql['save_model'], (long(timestamp), id, model, float(metric)))
+    cur.execute(self._sql['save_model'], (long(timestamp), id, Utils.serialize(model), float(metric)))
     self._conn.commit()
+    cur.close()
+
+  def get_model(self, timestamp, id):
+    print 'retrieving model %s at %s' % (id, timestamp)
+    cur = self._conn.cursor()
+    cur.execute(self._sql['get_model'], (long(timestamp), id))
+    tupl = cur.fetchone()
+    model = None
+    if tupl:
+      model = Utils.deserialize(tupl)
+    cur.close()
+    return model
+
