@@ -16,18 +16,19 @@ class DB:
   def save_model(self, timestamp, id, model, metric):
     print 'saving model %s at %s' % (id, timestamp)
     cur = self._conn.cursor()
-    cur.execute(self._sql['save_model'], (long(timestamp), id, Utils.serialize(model), float(metric)))
+    cur.execute(self._sql['save_model'], {'timestamp': long(timestamp), 'id': id, 
+                'data': Utils.serialize(model), 'metric' : float(metric)})
     self._conn.commit()
     cur.close()
 
-  def get_model(self, timestamp, id):
+  def get_model(self, id, timestamp):
     print 'retrieving model %s at %s' % (id, timestamp)
     cur = self._conn.cursor()
-    cur.execute(self._sql['get_model'], (long(timestamp), id))
+    cur.execute(self._sql['get_model'], {'timestamp' : long(timestamp), 'id' : id})
     tupl = cur.fetchone()
     model = None
     if tupl:
-      model = Utils.deserialize(tupl)
+      model = Utils.deserialize(tupl[0])
     cur.close()
     return model
 

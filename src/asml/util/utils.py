@@ -14,9 +14,15 @@ class Utils:
 
   @classmethod
   def serialize(cls, object):
-    return base64.b64encode(pickle.dumps(object, pickle.HIGHEST_PROTOCOL))
+    try:
+      return base64.b64encode(pickle.dumps(object, pickle.HIGHEST_PROTOCOL))
+    except Exception, ex:
+      print 'exc serializing %s' % ex.message
 
 
   @classmethod
   def deserialize(cls, string):
-    return pickle.load(base64.b64decode(string))      
+    try:
+      return pickle.loads(base64.b64decode(string))
+    except Exception, ex:
+      print 'exc deserializing %s' % ex.message
