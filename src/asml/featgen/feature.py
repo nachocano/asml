@@ -18,7 +18,7 @@ class FeatureGenerator:
     self._parser = ParserFactory.new_parser(module_properties['parser'])
     self._stream_client = StreamClient(module_properties)
     self._processor = StreamService.Processor(FeatureGeneratorHandler(self._stream_client, self._parser))
-    self._stream_server = Server(module_properties, self._processor)
+    self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
 
   def run(self):
     self._stream_client.open()

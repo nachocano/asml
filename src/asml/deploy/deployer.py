@@ -28,7 +28,7 @@ class Deployer:
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
     self._notification_client = NotificationClient(module_properties)
     self._processor = StreamService.Processor(DeployerHandler(self._evaluator, self._notification_client))
-    self._stream_server = Server(module_properties, self._processor)
+    self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
 
   def run(self):
     self._notification_client.open()

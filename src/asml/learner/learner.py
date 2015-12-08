@@ -55,7 +55,7 @@ class Learner:
     self._stream_client = StreamClient(module_properties)
     self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._classes, self._warmup_examples, self._id)
     self._processor = StreamService.Processor(self._handler)
-    self._stream_server = Server(module_properties, self._processor)
+    self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
 
   def run(self):
     self._stream_client.open()

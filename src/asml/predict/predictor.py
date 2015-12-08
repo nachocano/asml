@@ -1,12 +1,18 @@
 from asml.autogen.services import NotificationService
+from asml.autogen.services import StreamService
 from asml.network.server import Server
+from threading import Thread
 
-class PredictorHandler:
-  # def __init__(self):
+class PredictorStreamHandler:
+  #def __init__(self):
   #   pass
 
   def emit(self, data):
     print data
+
+class PredictorNotificationHandler:
+  #def __init__(self):
+  #   pass
 
   def best_model(id, timestamp):
     print "predictor %s, %s" % (id, timestamp)
@@ -16,9 +22,17 @@ class Predictor:
   def __init__(self, module_properties, dao):
     self._warmup_examples = module_properties['warmup_examples']
     self._dao = dao
-    self._handler = PredictorHandler()
-    self._processor = NotificationService.Processor(self._handler)
-    self._server = Server(module_properties, self._processor)
+    self._notif_processor = NotificationService.Processor(PredictorNotificationHandler())
+    self._stream_processor = StreamService.Processor(PredictorStreamHandler())
+    self._notif_server = Server(self._notif_processor, module_properties['notif_server_port'], module_properties['notif_multi_threading'])
+    self._stream_server = Server(self._stream_processor, module_properties['stream_server_port'], module_properties['stream_multi_threading'])
+
+  def _init_stream(self):
+    self._stream_server.start()
+
 
   def run(self):
-    self._server.start()
+    thread = Thread(target = self._init_stream)
+    thread.daemon = True
+    thread.start()
+    self._notif_server.start()

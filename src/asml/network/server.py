@@ -4,13 +4,13 @@ from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
 class Server:
-  def __init__(self, module_properties, processor):
-    self._portno = module_properties['server_port']
+  def __init__(self, processor, portno, multi_threading):
+    self._portno = portno
     try:
       self._transport = TSocket.TServerSocket(port=self._portno)
       tfactory = TTransport.TBufferedTransportFactory()
       pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-      if module_properties['multi_threading']:
+      if multi_threading:
         self._server = TServer.TThreadedServer(processor, self._transport, tfactory, pfactory)
       else:
         self._server = TServer.TSimpleServer(processor, self._transport, tfactory, pfactory)

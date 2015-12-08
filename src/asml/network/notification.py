@@ -13,4 +13,4 @@ class NotificationClient(Client):
     clients = self.get_clients()
     for key in clients:
       print 'notifying of best model to %s' % str(key)
-      client[key].best_model(id, timestamp)
+      clients[key].best_model(id, timestamp)
