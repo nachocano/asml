@@ -21,7 +21,7 @@ class PredictorStreamHandler:
       pass
 
   def on_new_model(self, id, timestamp):
-    new_model = self._dao.get_model(id, timestamp)
+    new_clf = self._dao.get_model(id, timestamp)
     print "on_new_model succeed"
 
 class PredictorNotificationHandler:

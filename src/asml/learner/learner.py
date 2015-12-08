@@ -35,17 +35,20 @@ class LearnerHandler:
 
     # evaluate
     new_metric = self._evaluator.evaluate(y, predictions)
-
-    if timestamp >= self._warmup_examples:
+    # if warmup, just save the model with default metric, and send it to deployer
+    # so that he can take care of it...
+    if timestamp < self._warmup_examples:
+      self._dao.save_model(timestamp, self._id, self._clf, self._evaluator.default())
+      self._stream_client.emit(['%s %s %s' % (self._id, new_metric, timestamp)])
+    else:
       logging.debug('%s:%s', timestamp, new_metric)
-    
-    # check if we improve
-    if self._evaluator.is_better_or_equal(new_metric, self._current_best):
-      self._current_best = new_metric
-      # persist the current best
-      self._dao.save_model(timestamp, self._id, self._clf, new_metric)
-      # send it to the deployer, so that he can decide if this is the overall best
-      self._stream_client.emit(['%s %s %s' % (self._id, self._current_best, timestamp)])
+      # check if we improve
+      if self._evaluator.is_better_or_equal(new_metric, self._current_best):
+        self._current_best = new_metric
+        # persist the current best
+        self._dao.save_model(timestamp, self._id, self._clf, new_metric)
+        # send it to the deployer, so that he can decide if this is the overall best
+        self._stream_client.emit(['%s %s %s' % (self._id, self._current_best, timestamp)])
 
 class Learner:
   def __init__(self, module_properties, dao, clf):
