@@ -4,6 +4,6 @@ create table model (
        timestamp bigint
      , id text 
      , data text
-     , metric decimal
+     , metric real
      , primary key (timestamp, id)
 );

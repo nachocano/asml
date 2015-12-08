@@ -35,9 +35,12 @@ class Client:
 
   def close():
     for key in self._transports:
-      transport = self._transports[key]
-      print 'closing connection to %s' % str(key)
-      transport.close()
+      try:
+        transport = self._transports[key]
+        print 'closing connection to %s' % str(key)
+        transport.close()
+      except Thrift.TException as tx:
+        print(('client exc: %s' % (tx.message)))
 
   def get_clients(self):
     return self._clients

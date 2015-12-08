@@ -1,2 +1,2 @@
-save_model: insert into model (timestamp, id, data, metric) values (%s, %s, %s, %s)
-get_model: select data from model where timestamp=%s and id=%s
+save_model: insert into model (timestamp, id, data, metric) values (%(timestamp)s, %(id)s, %(data)s, %(metric)s);
+get_model: select data from model where id = %(id)s and timestamp = %(timestamp)s;
