@@ -14,7 +14,7 @@ class PredictorStreamHandler:
     self._dao = dao
     self._evaluator = evaluator
     self._warmup_examples = warmup_examples
-    self._clf = None
+    self._best = None
     self._lock = Lock()
     self._current_timestamp = -1
     self._queue = Queue.Queue(5)
@@ -30,9 +30,10 @@ class PredictorStreamHandler:
         predicted = False
         with self._lock:
           self._current_timestamp = timestamp
-          if self._clf:
+          if self._best:
             predicted = True
-            predictions = self._clf.predict(X)
+            predictions = self._best[0].predict(X)
+            print 'predicting with model %s at %s' % (self._best[1], self._best[2])
         if predicted:
           metric = self._evaluator.evaluate(y, predictions)
           logging.debug('%s:%s', timestamp, metric)
@@ -48,15 +49,15 @@ class PredictorStreamHandler:
       with self._lock:
         print 'queue size %d' % self._queue.qsize()
         print 'current timestamp %s' % self._current_timestamp
-        if self._current_timestamp > timestamp:
+        if self._current_timestamp >= timestamp:
           print 'pushing model %s at %s to production' % (id, timestamp)
-          self._clf = new_clf
+          self._best = (new_clf, id, timestamp)
         else:
           if not self._queue.empty():
             id_, timestamp_, old_clf_ = self._queue.get()
             if self._current_timestamp > timestamp_:
               print 'pushing model (from queue) %s at %s to production' % (id_, timestamp_)
-              self._clf = old_clf_
+              self._best = (old_clf_, id_, timestamp_)
           self._queue.put((id, timestamp, new_clf))
     except Exception, ex:
       print 'ex %s' % ex.message
