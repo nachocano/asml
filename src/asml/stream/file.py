@@ -9,7 +9,7 @@ class FileStream:
   def __init__(self, module_properties):
     self._path = module_properties['filename']
     self._batch_size = module_properties['batch_size']
-    self._parser = ParserFactory.new_parser(module_properties['parser'])
+    self._parser = ParserFactory.new_parser(module_properties)
     self._stream_client = StreamClient(module_properties)
     self._iter = self._stream_data()
 

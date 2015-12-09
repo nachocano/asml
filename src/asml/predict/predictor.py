@@ -73,7 +73,7 @@ class Predictor:
   def __init__(self, module_properties, dao):
     self._dao = dao
     self._warmup_examples = module_properties['warmup_examples']
-    self._parser = ParserFactory.new_parser(module_properties['parser'])
+    self._parser = ParserFactory.new_parser(module_properties)
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
     self._stream_handler = PredictorStreamHandler(self._parser, self._dao, self._evaluator, self._warmup_examples)
     self._notification_handler = PredictorNotificationHandler(self._stream_handler)

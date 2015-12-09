@@ -42,7 +42,7 @@ class Learner:
   def __init__(self, module_properties, dao, clf):
     self._id = module_properties['id']
     self._warmup_examples = module_properties['warmup_examples']
-    self._parser = ParserFactory.new_parser(module_properties['parser'])
+    self._parser = ParserFactory.new_parser(module_properties)
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
     self._offline_test = self._parser.parse(module_properties['offline_test'])
     self._dao = dao

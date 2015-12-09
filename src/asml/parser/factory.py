@@ -3,8 +3,9 @@ from criteo import CriteoParser
 class ParserFactory:
 
   @classmethod
-  def new_parser(cls, parser):
+  def new_parser(cls, module_properties):
+    parser = module_properties['parser']
     if parser == 'criteo':
-      return CriteoParser()
+      return CriteoParser(module_properties)
     else:
       raise ValueException('invalid parser %s' % value)

@@ -31,7 +31,7 @@ class Parser:
       for elem in example[2:]:
         col, val = elem.split(':')
         column.append(int(col))
-        value.append(int(val))
+        value.append(float(val))
     X = sparse.csr_matrix((value, (row, column)), shape=(len(data)-1, d))
     y = np.array(labels)
     return X, y, timestamp

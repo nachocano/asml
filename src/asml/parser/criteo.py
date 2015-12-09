@@ -3,16 +3,24 @@ import gzip
 
 class CriteoParser(Parser):
   
-  def __init__(self, m=100000):
+  def __init__(self, module_properties):
     Parser.__init__(self)
     self._no_count_feat = 13
     self._no_cat_feat = 26
-    self._m = m
+    if module_properties.has_key('hash_dimensions'):
+      self._m = int(module_properties['hash_dimensions'])
+    if module_properties.has_key('max_mins'):
+      maxs_mins = module_properties['max_mins'].split(',')
+      self._max_mins = {}
+      for i, mm in enumerate(maxs_mins):
+        max_, min_ = mm.split(':')
+        self._max_mins[i] = (int(max_), int(min_))
+      assert len(self._max_mins) == self._no_count_feat
 
   def parse(self, filename):
     features = []
     # send the number of dimensions as the first element
-    features.append('%s' % self._m)
+    features.append('%s' % (self._m + self._no_count_feat))
     for i, line in enumerate(gzip.open(filename, 'rb')):
       line = '%s\t%s' % (i, line)
       features.append(self._parse_line(line))
@@ -25,7 +33,7 @@ class CriteoParser(Parser):
   def parse_raw(self, data):
     features = []
     # send the number of dimensions as the first element
-    features.append('%s' % self._m)
+    features.append('%s' % (self._m + self._no_count_feat))
     for line in data:
       features.append(self._parse_line(line))
     return features
@@ -39,17 +47,31 @@ class CriteoParser(Parser):
     # [15:] categorical features (26)
     cat_features = values[self._no_count_feat+2:]
 
+    # count features, normalize them
+    counts = []
+    for i, count_feature in enumerate(count_features):
+      if count_feature != '':
+        as_int = int(count_feature)
+        normalized = float(as_int - self._max_mins[i][1]) / (self._max_mins[i][0] - self._max_mins[i][1])
+        if normalized < 0:
+          normalized == 0
+        elif normalized > 1:
+          normalized == 1
+        counts.append('%s:%s' % (i, normalized))
+
+    # categorical features, hashed them
     hashed_features = {}
     for i, cat_feature in enumerate(cat_features):
       if cat_feature != '':
         self._update_feature(cat_feature, 1, hashed_features, self._m)
-
     categories = []
     for key in sorted(hashed_features):
-      categories.append('%s:%s' % (key, hashed_features[key]))
+      categories.append('%s:%s' % (key + self._no_count_feat, hashed_features[key]))
+    
+    counts_as_str = ' '.join(count_f for count_f in counts)
     categories_as_str = ' '.join(c for c in categories)
-    # timestamp, label, categories
-    parsed_line = '%s %s %s' % (values[0], values[1], categories_as_str)
+    # timestamp, label, count_features, categorical_features
+    parsed_line = '%s %s %s %s' % (values[0], values[1], counts_as_str, categories_as_str)
     return parsed_line
 
   def _get_values(self, line):
