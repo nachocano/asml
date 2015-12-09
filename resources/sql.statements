@@ -1,2 +1,6 @@
-save_model: insert into model (timestamp, id, data, metric) values (%(timestamp)s, %(id)s, %(data)s, %(metric)s);
-get_model: select data from model where id = %(id)s and timestamp = %(timestamp)s;
+save_model: insert into model (id, data) values (%(id)s, %(data)s);
+update_model: update model set id=%(id)s,data=%(data)s where id=%(cond)s;
+get_model: select data from model where id = %(id)s;
+save_examples: insert into example (timestamp, data) values (%(timestamp)s, %(data)s);
+get_examples: select data from example;
+delete_examples: delete from example where timestamp < %(timestamp)s;

@@ -13,22 +13,37 @@ class DB:
       raise Exception("Unable to connect to the database")
       exit(1)
 
-  def save_model(self, timestamp, id, model, metric):
-    print 'saving model %s at %s' % (id, timestamp)
+  def save_model(self, id, model):
+    print 'saving model %s' % id
     cur = self._conn.cursor()
-    cur.execute(self._sql['save_model'], {'timestamp': long(timestamp), 'id': id, 
-                'data': Utils.serialize(model), 'metric' : float(metric)})
+    cur.execute(self._sql['save_model'], {'id': id, 'data': Utils.serialize(model)})
     self._conn.commit()
     cur.close()
 
-  def get_model(self, id, timestamp):
-    print 'retrieving model %s at %s' % (id, timestamp)
+  def update_model(self, id, model):
+    print 'updating model %s' % id
     cur = self._conn.cursor()
-    cur.execute(self._sql['get_model'], {'timestamp' : long(timestamp), 'id' : id})
+    cur.execute(self._sql['update_model'], {'id': id, 'data': Utils.serialize(model), 'cond' : id})
+    self._conn.commit()
+    cur.close()    
+
+  def get_model(self, id):
+    print 'retrieving model %s' % id
+    cur = self._conn.cursor()
+    cur.execute(self._sql['get_model'], {'id' : id})
     tupl = cur.fetchone()
     model = None
     if tupl:
       model = Utils.deserialize(tupl[0])
     cur.close()
     return model
+
+  def save_examples(self, examples):
+    pass
+
+  def get_examples(self):
+    pass
+
+  def delete_examples(self):
+    pass
 

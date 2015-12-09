@@ -18,5 +18,8 @@ class AUC(Eval):
     fpr, tpr, _ = roc_curve(truth, preds)
     return auc(fpr, tpr)
 
+  def best(self, tuples, idx):
+    return max(tuples, key=lambda v: v[idx])
+
   def __str__(self):
     return 'auc'

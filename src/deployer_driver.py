@@ -2,6 +2,7 @@
 import argparse
 from asml.deploy.deployer import Deployer
 from asml.util.utils import Utils
+import logging
 
 def main():
   parser = argparse.ArgumentParser(description='Deployer')
@@ -10,6 +11,8 @@ def main():
   
   module_properties = Utils.read_properties(args.module_properties)
   
+  logging.basicConfig(filename=module_properties['log_file'], filemode='w', format='%(asctime)s %(message)s', level=logging.DEBUG)  
+
   deployer = Deployer(module_properties)
   deployer.run()
 
