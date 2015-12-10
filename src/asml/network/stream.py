@@ -19,11 +19,9 @@ class StreamClient(Client):
         thread = Thread(target=self._do_emit, args=(clients[key], key, data))
         threads.append(thread)
       # start the threads
-      print 'starting threads'
       for t in threads:
         t.start()
       # wait for completion
-      print 'joining threads'
       for t in threads:
         t.join()
     except Exception, ex:
