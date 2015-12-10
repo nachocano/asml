@@ -8,12 +8,11 @@ from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
 
 class LearnerHandler:
-  def __init__(self, client, parser, evaluator, dao, clf, test, classes, warmup_examples, id, checkpoint):
+  def __init__(self, client, parser, evaluator, dao, clf, classes, warmup_examples, id, checkpoint):
     self._stream_client = client
     self._parser = parser
     self._evaluator = evaluator
     self._dao = dao
-    self._test = test
     self._clf = clf
     self._classes = classes
     self._warmup_examples = warmup_examples
@@ -36,14 +35,12 @@ class LearnerHandler:
         streaming_predictions = self._clf.predict(X)
         # train on streaming data
         self._clf.partial_fit(X, y, classes=self._classes)
-        # predict on offline data
-        offline_predictions = self._clf.predict(self._test[0])
-        # evaluate on the offline data
-        offline_metric = self._evaluator.evaluate(self._test[1], offline_predictions)
+        # evaluate on the streaming data
+        stream_metric = self._evaluator.stream_evaluate(y, streaming_predictions)
         # debug
-        logging.debug('offline:%s:%s', timestamps[-1], offline_metric)
+        logging.debug('streaming:%s:%s', timestamps[-1], stream_metric)
         # build message to emit
-        header = '%s %s %s' % (self._id, offline_metric, timestamps[-1])
+        header = '%s %s %s' % (self._id, stream_metric, timestamps[-1])
         body = self._stack(timestamps, y, streaming_predictions)
         body.insert(0, header)
         # emit message, deployer will see who is the overall best
@@ -80,10 +77,9 @@ class Learner:
     self._checkpoint = module_properties['checkpoint']
     self._parser = ParserFactory.new_parser(module_properties)
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
-    self._offline_test = self._parser.parse(module_properties['offline_test'])
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
-    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._offline_test, 
+    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, 
                               self._classes, self._warmup_examples, self._id, self._checkpoint)
     self._processor = StreamService.Processor(self._handler)
     self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
