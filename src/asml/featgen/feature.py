@@ -13,7 +13,7 @@ class FeatureGeneratorHandler:
     try:
       examples = self._parser.parse_raw(data)
       self._dao.save_examples(examples)
-      self._stream_client.emit(examples)
+      self._stream_client.emit(examples, multithreaded=True)
     except Exception, ex:
       print 'ex %s' % ex.message
 
