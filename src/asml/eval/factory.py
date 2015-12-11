@@ -1,5 +1,6 @@
 from auc import AUC
 from accuracy import Accuracy
+from f1 import F1
 
 class EvaluatorFactory:
 
@@ -8,6 +9,8 @@ class EvaluatorFactory:
     if evaluator == 'auc':
       return AUC()
     elif evaluator == 'accuracy':
-      return accuracy()
+      return Accuracy()
+    elif evaluator == 'f1':
+      return F1()
     else:
       raise ValueException('invalid evaluator %s' % evaluator)
