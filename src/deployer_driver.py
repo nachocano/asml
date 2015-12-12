@@ -11,7 +11,7 @@ def main():
   
   module_properties = Utils.read_properties(args.module_properties)
   
-  logging.basicConfig(filename=module_properties['log_file'], filemode='w', format='%(asctime)s %(message)s', level=logging.DEBUG)  
+  logging.basicConfig(filename=module_properties['log_file'], filemode='w', format='%(message)s', level=logging.DEBUG)  
 
   deployer = Deployer(module_properties)
   deployer.run()

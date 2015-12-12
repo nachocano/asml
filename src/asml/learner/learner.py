@@ -42,7 +42,7 @@ class LearnerHandler:
         # evaluate on the offline data
         offline_metric = self._evaluator.evaluate(self._test[1], offline_predictions[:,1])
         # debug
-        logging.debug('offline:%s:%s', timestamps[-1], offline_metric)
+        logging.debug('%s:%s', timestamps[-1], offline_metric)
         # build message to emit
         header = '%s %s %s' % (self._id, offline_metric, timestamps[-1])
         body = self._stack(timestamps, y, streaming_predictions[:,1])

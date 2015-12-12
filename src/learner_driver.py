@@ -16,7 +16,7 @@ def main():
   db_properties = Utils.read_properties(args.db_properties)
   sql_statements = Utils.read_properties(args.sql_statements)
 
-  logging.basicConfig(filename=module_properties['log_file'], filemode='w', format='%(asctime)s %(message)s', level=logging.DEBUG)
+  logging.basicConfig(filename=module_properties['log_file'], filemode='w', format='%(message)s', level=logging.DEBUG)
 
   dao = DB(db_properties, sql_statements)
 
