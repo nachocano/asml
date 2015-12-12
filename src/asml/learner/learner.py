@@ -33,18 +33,19 @@ class LearnerHandler:
         self._clf.partial_fit(X, y, classes=self._classes)
       else:
         # predict streaming data
-        streaming_predictions = self._clf.predict(X)
+        streaming_predictions = self._clf.predict_proba(X)
         # train on streaming data
         self._clf.partial_fit(X, y, classes=self._classes)
         # predict on offline data
-        offline_predictions = self._clf.predict(self._test[0])
+        offline_predictions = self._clf.predict_proba(self._test[0])
+
         # evaluate on the offline data
-        offline_metric = self._evaluator.evaluate(self._test[1], offline_predictions)
+        offline_metric = self._evaluator.evaluate(self._test[1], offline_predictions[:,1])
         # debug
         logging.debug('offline:%s:%s', timestamps[-1], offline_metric)
         # build message to emit
         header = '%s %s %s' % (self._id, offline_metric, timestamps[-1])
-        body = self._stack(timestamps, y, streaming_predictions)
+        body = self._stack(timestamps, y, streaming_predictions[:,1])
         body.insert(0, header)
         # emit message, deployer will see who is the overall best
         self._stream_client.emit(body)

@@ -12,4 +12,4 @@ class LearnerFactory:
     elif learner == 'pa':
       return PA(module_properties, dao)
     else:
-      raise ValueException('invalid learner %s' % learner)
+      raise ValueError('invalid learner %s' % learner)

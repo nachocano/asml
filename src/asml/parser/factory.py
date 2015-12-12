@@ -8,4 +8,4 @@ class ParserFactory:
     if parser == 'criteo':
       return CriteoParser(module_properties)
     else:
-      raise ValueException('invalid parser %s' % value)
+      raise ValueError('invalid parser %s' % value)

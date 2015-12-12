@@ -13,7 +13,7 @@ class DeployerHandler:
     self._predictions = defaultdict(list)
     self._lock = threading.Lock()
     # TODO create register service and set this up
-    self._no_clients = 2
+    self._no_clients = 3
     
   def emit(self, data):
     try:
