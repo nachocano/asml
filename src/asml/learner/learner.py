@@ -8,7 +8,7 @@ from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
 
 class LearnerHandler:
-  def __init__(self, client, parser, evaluator, dao, clf, test, classes, warmup_examples, id, checkpoint):
+  def __init__(self, client, parser, evaluator, dao, clf, test, classes, warmup_examples, id, checkpoint, prequential):
     self._stream_client = client
     self._parser = parser
     self._evaluator = evaluator
@@ -19,8 +19,11 @@ class LearnerHandler:
     self._warmup_examples = warmup_examples
     self._id = id
     self._checkpoint = checkpoint
+    self._is_prequential = prequential
     self._batches = 0
     self._checkpointed = False
+    self._is_first = True
+    self._streaming_metric = None
 
   def emit(self, data):
     try:
@@ -34,21 +37,26 @@ class LearnerHandler:
       else:
         # predict streaming data
         streaming_predictions = self._clf.predict_proba(X)
-        # train on streaming data
-        self._clf.partial_fit(X, y, classes=self._classes)
-        # predict on offline data
-        offline_predictions = self._clf.predict_proba(self._test[0])
 
-        # evaluate on the offline data
-        offline_metric = self._evaluator.evaluate(self._test[1], offline_predictions[:,1])
-        # debug
-        logging.debug('%s:%s', timestamps[-1], offline_metric)
-        # build message to emit
-        header = '%s %s %s' % (self._id, offline_metric, timestamps[-1])
-        body = self._stack(timestamps, y, streaming_predictions[:,1])
-        body.insert(0, header)
-        # emit message, deployer will see who is the overall best
-        self._stream_client.emit(body)
+        # prequential predictions
+        if self._is_prequential:
+          if self._is_first:
+            # decide which one is the best based on the holdout
+            self._holdout(timestamps, y, streaming_predictions)
+            self._is_first = False
+          else:
+            logging.debug('%s:%s', timestamps[-1], self._streaming_metric)
+            self._build_and_send(self._streaming_metric, timestamps, y, streaming_predictions)
+        # pure offline predictions
+        else:
+          self._holdout(timestamps, y, streaming_predictions)
+
+        # now update the model (we assume we receive the label "later", though it comes in the batch)
+        self._clf.partial_fit(X, y, classes=self._classes)
+        if self._is_prequential:
+          # also update the streaming metric to use in the next batch
+          self._streaming_metric = self._evaluator.stream_evaluate(y, streaming_predictions[:,1])
+
       
       # checkpointing model every x number of batches
       if self._batches >= self._checkpoint:
@@ -62,6 +70,27 @@ class LearnerHandler:
 
     except Exception, ex:
       print 'ex %s' % ex.message
+
+  def _build_and_send(self, metric, timestamps, y, streaming_predictions):
+    header = '%s %s %s' % (self._id, metric, timestamps[-1])
+    body = self._stack(timestamps, y, streaming_predictions[:,1])
+    body.insert(0, header)
+    # emit message, deployer will see who is the overall best
+    self._stream_client.emit(body)
+
+  def _prequential(self, timestamps, y, streaming_predictions):
+    logging.debug('%s:%s', timestamps[-1], self._streaming_metric)
+    self._build_and_send(previous_metric, timestamps, streaming_predictions)
+
+  def _holdout(self, timestamps, y, streaming_predictions):
+    # predict on offline data
+    offline_predictions = self._clf.predict_proba(self._test[0])
+    # evaluate on the offline data
+    offline_metric = self._evaluator.evaluate(self._test[1], offline_predictions[:,1])
+    # debug
+    logging.debug('%s:%s', timestamps[-1], offline_metric)
+    # build message and emit
+    self._build_and_send(offline_metric, timestamps, y, streaming_predictions)
 
   def _stack(self, timestamps, y, y_hat, log=True):
     stacked = []
@@ -79,13 +108,14 @@ class Learner:
     self._id = module_properties['id']
     self._warmup_examples = module_properties['warmup_examples']
     self._checkpoint = module_properties['checkpoint']
+    self._is_prequential = True if module_properties['eval_mode'] == 'prequential' else False
     self._parser = ParserFactory.new_parser(module_properties)
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
     self._offline_test = self._parser.parse(module_properties['offline_test'])
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
     self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._offline_test, 
-                              self._classes, self._warmup_examples, self._id, self._checkpoint)
+                              self._classes, self._warmup_examples, self._id, self._checkpoint, self._is_prequential)
     self._processor = StreamService.Processor(self._handler)
     self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
 

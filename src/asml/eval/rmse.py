@@ -5,13 +5,15 @@ import math
 class RMSE(Eval):
   def __init__(self):
     Eval.__init__(self)
-    self._preds = np.array([])
-    self._truth = np.array([])
+    self._previous_s = 0
+    self._previous_n = 0
+    self._alpha = 0.995    
 
   def stream_evaluate(self, truth, pred):
-    self._truth = np.hstack((self._truth, truth))
-    self._preds = np.hstack((self._preds, pred))
-    return self.evaluate(self._truth, self._preds)
+    ei = self.evaluate(truth, pred)
+    self._previous_s = ei + self._alpha * self._previous_s
+    self._previous_n = 1 + self._alpha * self._previous_n
+    return float(self._previous_s) / self._previous_n
 
   def evaluate(self, truth, pred):
     size = truth.shape[0]
