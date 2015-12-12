@@ -37,6 +37,7 @@ class CriteoParser(Parser):
         self._max_mins[i] = (int(max_), int(min_))
       assert len(self._max_mins) == self._no_count_feat
 
+  '''convert to bitfield before calculating similarity'''
   def bitfield(self,n, maxLen=32):
      	lst= [1 if digit=='1' else 0 for digit in bin(n)[2:]]
      	return [0]*(maxLen - len(lst))+lst
