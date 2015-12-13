@@ -2,6 +2,7 @@ from auc import AUC
 from accuracy import Accuracy
 from rmse import RMSE
 from logloss import LogLoss
+from zeroone import ZeroOne
 
 class EvaluatorFactory:
 
@@ -15,5 +16,7 @@ class EvaluatorFactory:
       return RMSE()
     elif evaluator == 'log_loss':
       return LogLoss()
+    elif evaluator == 'zero_one':
+      return ZeroOne()
     else:
       raise ValueError('invalid evaluator %s' % evaluator)
