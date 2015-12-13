@@ -1,5 +1,5 @@
 from parser import Parser
-import gzip
+from asml.util.utils import Utils
 
 class CriteoParser(Parser):
   
@@ -17,28 +17,10 @@ class CriteoParser(Parser):
         self._max_mins[i] = (int(max_), int(min_))
       assert len(self._max_mins) == self._no_count_feat
 
-  def parse(self, filename):
-    features = []
-    # send the number of dimensions as the first element
-    features.append('%s' % (self._m + self._no_count_feat))
-    for i, line in enumerate(gzip.open(filename, 'rb')):
-      line = '%s\t%s' % (i, line)
-      features.append(self._parse_line(line))
-    return self.parse_feature(features)
+  def num_features(self):
+    return self._m + self._no_count_feat
 
-  def parse_stream(self, fd):
-    for i, line in enumerate(fd):
-      yield '%s\t%s' % (i, line)
-
-  def parse_raw(self, data):
-    features = []
-    # send the number of dimensions as the first element
-    features.append('%s' % (self._m + self._no_count_feat))
-    for line in data:
-      features.append(self._parse_line(line))
-    return features
-
-  def _parse_line(self, line):
+  def parse_line(self, line):
     values = self._get_values(line)
     # 0 = timestamp
     # 1 = label
@@ -63,7 +45,7 @@ class CriteoParser(Parser):
     hashed_features = {}
     for i, cat_feature in enumerate(cat_features):
       if cat_feature != '':
-        self._update_feature(cat_feature, 1, hashed_features, self._m)
+        Utils.update_feature(cat_feature, 1, hashed_features, self._m)
     categories = []
     for key in sorted(hashed_features):
       categories.append('%s:%s' % (key + self._no_count_feat, hashed_features[key]))
@@ -84,30 +66,3 @@ class CriteoParser(Parser):
     # i, label, 13 counts, 26 categorical
     assert len(values) == 41
     return values
-
-  # hashing utilities (ML4BD class)
-
-  def _hash_to_range(self, s, upper):
-    hashval = hash(str(s)) % upper;
-    if hashval < 0:
-      hashval = upper + hashval
-    return hashval
-
-  def _hash_to_sign(self, s):
-    if hash(str(s)) % 2 == 0:
-      return -1
-    else:
-      return 1
-
-  def _update_feature(self, key, val, hashed_features, dim):
-    hashed_key = self._hash_to_range(key, dim)
-    hashed_sign = self._hash_to_sign(key)
-    current_hashed_value = hashed_features.get(hashed_key, 0)
-    current_hashed_value += val * hashed_sign
-    hashed_features[hashed_key] = current_hashed_value
-
-
-
-
-
-

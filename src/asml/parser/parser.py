@@ -1,22 +1,45 @@
 import abc
 from scipy import sparse
 import numpy as np
+import gzip
 
 class Parser:
   __metaclass__ = abc.ABCMeta
 
+
   @abc.abstractmethod
+  def num_features(self):
+    return
+
+  @abc.abstractmethod
+  def parse_line(self, line):
+    return
+
+  # for holdout testing data
   def parse(self, filename):
-    return
+    features = []
+    # send the number of dimensions as the first element
+    features.append('%s' % (self._m + self._no_count_feat))
+    for i, line in enumerate(gzip.open(filename, 'rb')):
+      line = '%s\t%s' % (i, line)
+      features.append(self.parse_line(line))
+    return self.parse_feature(features)
 
-  @abc.abstractmethod
+  # adds the timestamp
   def parse_stream(self, fd):
-    return
+    for i, line in enumerate(fd):
+      yield '%s\t%s' % (i, line)
 
-  @abc.abstractmethod
+  # generates the features from raw data
   def parse_raw(self, data):
-    return
+    features = []
+    # send the number of dimensions as the first element
+    features.append('%s' % self.num_features())
+    for line in data:
+      features.append(self.parse_line(line))
+    return features
 
+  # features into numpy formats
   def parse_feature(self, data):
     timestamps, labels, row, column, value = [], [], [], [], []
     N = len(data) - 1

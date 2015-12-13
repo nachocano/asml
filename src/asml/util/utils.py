@@ -26,3 +26,28 @@ class Utils:
       return pickle.loads(base64.b64decode(string))
     except Exception, ex:
       print 'exc deserializing %s' % ex.message
+
+
+  # hashing utilities (ML4BD class)
+  
+  @classmethod
+  def hash_to_range(cls, s, upper):
+    hashval = hash(str(s)) % upper;
+    if hashval < 0:
+      hashval = upper + hashval
+    return hashval
+
+  @classmethod
+  def hash_to_sign(cls, s):
+    if hash(str(s)) % 2 == 0:
+      return -1
+    else:
+      return 1
+  
+  @classmethod
+  def update_feature(cls, key, val, hashed_features, dim):
+    hashed_key = Utils.hash_to_range(key, dim)
+    hashed_sign = Utils.hash_to_sign(key)
+    current_hashed_value = hashed_features.get(hashed_key, 0)
+    current_hashed_value += val * hashed_sign
+    hashed_features[hashed_key] = current_hashed_value
