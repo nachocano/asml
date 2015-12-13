@@ -23,7 +23,7 @@ class LearnerHandler:
     self._batches = 0
     self._checkpointed = False
     self._is_first = True
-    self._streaming_metric = None
+    self._streaming_metric = 0
 
   def emit(self, data):
     try:
@@ -33,21 +33,22 @@ class LearnerHandler:
       if timestamps[-1] < self._warmup_examples:
         # just train
         print 'warming up at %s' % timestamps[-1]
-        self._clf.partial_fit(X, y, classes=self._classes)
+        if self._is_first:
+          self._clf.partial_fit(X, y, classes=self._classes)
+          self._is_first = False
+        else:
+          streaming_predictions = self._clf.predict_proba(X)
+          self._clf.partial_fit(X, y, classes=self._classes)
+          self._streaming_metric = self._evaluator.stream_evaluate(y, streaming_predictions[:,1])
       else:
         # predict streaming data
         streaming_predictions = self._clf.predict_proba(X)
 
         # prequential predictions
         if self._is_prequential:
-          if self._is_first:
-            # decide which one is the best based on the holdout
-            self._holdout(timestamps, y, streaming_predictions)
-            self._is_first = False
-          else:
             logging.debug('%s:%s', timestamps[-1], self._streaming_metric)
             self._build_and_send(self._streaming_metric, timestamps, y, streaming_predictions)
-        # pure offline predictions
+        # holdout predictions
         else:
           self._holdout(timestamps, y, streaming_predictions)
 
