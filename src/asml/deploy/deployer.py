@@ -40,7 +40,7 @@ class DeployerHandler:
 
 class Deployer:
   def __init__(self, module_properties):
-    self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
+    self._evaluator = EvaluatorFactory.new_evaluator(module_properties)
     self._no_clients = module_properties['no_clients']
     self._processor = StreamService.Processor(DeployerHandler(self._evaluator, self._no_clients))
     self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])

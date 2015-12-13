@@ -111,7 +111,7 @@ class Learner:
     self._checkpoint = module_properties['checkpoint']
     self._is_prequential = True if module_properties['eval_mode'] == 'prequential' else False
     self._parser = ParserFactory.new_parser(module_properties)
-    self._evaluator = EvaluatorFactory.new_evaluator(module_properties['eval'])
+    self._evaluator = EvaluatorFactory.new_evaluator(module_properties)
     self._offline_test = self._parser.parse(module_properties['offline_test'])
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)

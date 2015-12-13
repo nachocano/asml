@@ -4,17 +4,8 @@ from sklearn.metrics import zero_one_loss
 
 
 class ZeroOne(Eval):
-  def __init__(self):
-    Eval.__init__(self)
-    self._previous_s = 0
-    self._previous_n = 0
-    self._alpha = 0.995
-
-  def stream_evaluate(self, truth, pred):
-    ei = self.evaluate(truth, pred)
-    self._previous_s = ei + self._alpha * self._previous_s
-    self._previous_n = 1 + self._alpha * self._previous_n
-    return float(self._previous_s) / self._previous_n
+  def __init__(self, alpha=1):
+    Eval.__init__(self, alpha)
 
   def _as_int(self,x):
     return round(x)
