@@ -1,4 +1,5 @@
 from criteo import CriteoParser
+from kdd import KddParser
 
 class ParserFactory:
 

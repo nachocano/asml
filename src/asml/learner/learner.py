@@ -8,22 +8,26 @@ from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
 
 class LearnerHandler:
-  def __init__(self, client, parser, evaluator, dao, clf, test, classes, warmup_examples, id, checkpoint, prequential):
+  def __init__(self, client, parser, evaluator, dao, clf, classes, warmup_examples, 
+              id, checkpoint, prequential, test):
     self._stream_client = client
     self._parser = parser
     self._evaluator = evaluator
     self._dao = dao
-    self._test = test
     self._clf = clf
     self._classes = classes
     self._warmup_examples = warmup_examples
     self._id = id
     self._checkpoint = checkpoint
     self._is_prequential = prequential
+    assert self._is_prequential == (test == None)
+    if test:
+      self._test = test
     self._batches = 0
     self._checkpointed = False
     self._is_first = True
     self._streaming_metric = 0
+
 
   def emit(self, data):
     try:
@@ -112,11 +116,13 @@ class Learner:
     self._is_prequential = True if module_properties['eval_mode'] == 'prequential' else False
     self._parser = ParserFactory.new_parser(module_properties)
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties)
-    self._offline_test = self._parser.parse(module_properties['offline_test'])
+    self._offline_test = None
+    if self._is_prequential == False:
+      self._offline_test = self._parser.parse(module_properties['offline_test'])
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
-    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._offline_test, 
-                              self._classes, self._warmup_examples, self._id, self._checkpoint, self._is_prequential)
+    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._classes, 
+                              self._warmup_examples, self._id, self._checkpoint, self._is_prequential, self._offline_test)
     self._processor = StreamService.Processor(self._handler)
     self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
 

@@ -19,7 +19,7 @@ class Parser:
   def parse(self, filename):
     features = []
     # send the number of dimensions as the first element
-    features.append('%s' % (self._m + self._no_count_feat))
+    features.append('%s' % self.num_features())
     for i, line in enumerate(gzip.open(filename, 'rb')):
       line = '%s\t%s' % (i, line)
       features.append(self.parse_line(line))

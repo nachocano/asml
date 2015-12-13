@@ -13,6 +13,8 @@ class KddParser(Parser):
     return self._m + self._regular_features
 
   def parse_line(self, line):
+    # remove \n
+    line = line.splitlines()[0]
     timestamp, rest = line.split('\t')
     fields = rest.split("|")
     clicked = int(fields[0])
@@ -23,7 +25,7 @@ class KddParser(Parser):
     # user gender indicator (-1 for male, 1 for female)
     gender = int(fields[4])
     if gender != 0:
-      gender = int((self.gender - 1.5) * 2)
+      gender = int((gender - 1.5) * 2)
     # user age indicator:
     #   '1' for (0, 12],
     #   '2' for (12, 18],
@@ -49,5 +51,5 @@ class KddParser(Parser):
     
     tokens_as_str = ' '.join(token_f for token_f in hashed_tokens_arr)
     # timestamp, label, depth, position, gender, age, categorical_features
-    parsed_line = '%s %s %s %s %s %s %s' % (timestamp, clicked, depth, position, gender, age, tokens_as_str)
+    parsed_line = '%s %s 0:%s 1:%s 2:%s 3:%s %s' % (timestamp, clicked, depth, position, gender, age, tokens_as_str)
     return parsed_line
