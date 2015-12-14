@@ -1,7 +1,7 @@
 import argparse
 import gzip
 
-parser = argparse.ArgumentParser(description='Split')
+parser = argparse.ArgumentParser(description='ASML Split')
 parser.add_argument('-i', '--input_file', required=True, help="the input file")
 parser.add_argument('-t', '--train_instances', type=int, required=True, help="train instances")
 parser.add_argument('-otr', '--output_train', required=True, help="the output train file")
