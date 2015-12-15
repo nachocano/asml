@@ -12,7 +12,7 @@ class RegistryHandler:
     self._deployer = None
     self._featgen = None
     self._ds = None
-    self._learners = []
+    self._learners = {}
 
 
   # you register the component, and piggyback the addresses of the components
@@ -28,8 +28,12 @@ class RegistryHandler:
         return self._learners
       elif comp_type == ComponentType.LEARNER:
         # need to notify the deployer of how many learners he should wait for
-        self._learners.append(address)
-        self._notify(self._deployer, self._learners)
+        with self._lock:
+          self._learners[address] = True
+        self._notify(self._deployer, self._learners.keys())
+        # also tell the feature generator, to contact those learners
+        if self._featgen:
+          self._notify(self._featgen, self._learners.keys())
         return [self._deployer]
       elif comp_type == ComponentType.DEPLOYER:
         self._deployer = address
@@ -42,6 +46,21 @@ class RegistryHandler:
  
   def unreg(self, comp_type, address):
     print 'unregister %s at %s' % (comp_type, address)
+    try:
+      if comp_type == ComponentType.LEARNER:
+        updated = False
+        with self._lock:
+          if self._learners.has_key(address):
+            del self._learners[address]
+            updated = True
+        # ugly stuff until I fix the feature generator, not to even communicate to this...
+        if updated:
+          self._notify(self._deployer, self._learners.keys())
+        return [self._deployer]
+      else:
+        raise ValueError("only support %s failure, not from %s" % (ComponentType.LEARNER, comp_type))
+    except Exception, ex:
+      print 'exc un-registering %s at %s' % (comp_type, address)
 
 
   def _notify(self, to, addresses):
