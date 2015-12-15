@@ -1,7 +1,8 @@
 # createdb -U postgres asml
 
 create table model ( 
-       id text 
+       id text
+     , timestamp bigint
      , data text
      , primary key (id)
 );

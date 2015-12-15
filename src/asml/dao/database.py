@@ -13,17 +13,17 @@ class DB:
       raise Exception("Unable to connect to the database")
       exit(1)
 
-  def save_model(self, id, model):
+  def save_model(self, id, timestamp, model):
     print 'saving model %s' % id
     cur = self._conn.cursor()
-    cur.execute(self._sql['save_model'], {'id': id, 'data': Utils.serialize(model)})
+    cur.execute(self._sql['save_model'], {'id': id, 'timestamp': timestamp, 'data': Utils.serialize(model)})
     self._conn.commit()
     cur.close()
 
-  def update_model(self, id, model):
+  def update_model(self, id, timestamp, model):
     print 'updating model %s' % id
     cur = self._conn.cursor()
-    cur.execute(self._sql['update_model'], {'id': id, 'data': Utils.serialize(model), 'cond' : id})
+    cur.execute(self._sql['update_model'], {'id': id, 'timestamp': timestamp, 'data': Utils.serialize(model), 'cond' : id})
     self._conn.commit()
     cur.close()    
 
@@ -33,13 +33,15 @@ class DB:
     cur.execute(self._sql['get_model'], {'id' : id})
     tupl = cur.fetchone()
     model = None
+    timestamp = None
     if tupl:
-     model = Utils.deserialize(tupl[0])
+     timestamp = tupl[0]
+     model = Utils.deserialize(tupl[1])
      print 'retrieved model %s' % id
     else:
       print 'not retrieved model %s' % id
     cur.close()
-    return model
+    return model, timestamp
 
   def save_examples(self, examples):
     print 'saving examples'

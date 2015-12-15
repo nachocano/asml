@@ -75,9 +75,9 @@ class LearnerHandler:
       if self._batches >= self._checkpoint:
         print 'checkpointing model at %s' % timestamps[-1]
         if self._checkpointed:
-          self._dao.update_model(self._id, self._clf)
+          self._dao.update_model(self._id, timestamps[-1], self._clf)
         else:
-          self._dao.save_model(self._id, self._clf)
+          self._dao.save_model(self._id, timestamps[-1], self._clf)
           self._checkpointed = True
         self._batches = 0
 
@@ -118,9 +118,11 @@ class Learner:
   def __init__(self, module_properties, dao, clf):
     self._dao = dao
     self._id = module_properties['id']
-    self._clf = self._dao.get_model(self._id)
+    self._clf, timestamp = self._dao.get_model(self._id)
     self._checkpointed = True
+    print timestamp
     if not self._clf:
+      # TODO get the historical data and train...
       self._clf = clf
       self._checkpointed = False
     self._warmup_examples = module_properties['warmup_examples']
