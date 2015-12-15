@@ -10,13 +10,28 @@ from asml.network.registry import RegistryClient
 from asml.util.utils import Utils
 
 
+class Output:
+  def __init__(self, registry):
+    self._registry = registry
+    self._stream_clients = []
+
+  def get_stream_clients(self):
+    return self._stream_clients
+
+  def do_emit(self, address, examples):
+    try:
+      client = StreamClient(address)
+      client.emit(examples)
+    except Exception, ex:
+      print 'exc, notify that the learner is not active anymore'
+      self._stream_clients = self._registry.unreg(ComponentType.LEARNER, address)
 
 class FeatureGeneratorHandler:
-  def __init__(self, registry, parser, dao, historical_batches, stream_client_addresses):
+  def __init__(self, registry, parser, dao, historical_batches, stream_clients_addresses):
     self._registry = registry
     self._parser = parser
     self._dao = dao
-    self._stream_clients_addresses = stream_client_addresses
+    self._stream_clients_addresses = stream_clients_addresses
     self._historical_batches = historical_batches
     self._batches = 0
     self._lock = threading.Lock()
@@ -48,10 +63,11 @@ class FeatureGeneratorHandler:
     with self._lock:
       copy_addresses = copy.deepcopy(self._stream_clients_addresses)
 
-    # TODO threadpool with futures
+    # TODO refactor, ugly stuff ##########################
+    outputs = [Output(self._registry) for x in copy_addresses]
     threads = []
-    for address in copy_addresses:
-      thread = threading.Thread(target=self._do_emit, args=(address, examples))
+    for i, address in enumerate(copy_addresses):
+      thread = threading.Thread(target=outputs[i].do_emit, args=(address, examples))
       threads.append(thread)
     # start threads
     for t in threads:
@@ -59,14 +75,21 @@ class FeatureGeneratorHandler:
     # wait for thread completion
     for t in threads:
       t.join()
-
-  def _do_emit(self, address, examples):
-    try:
-      client = StreamClient(address)
-      client.emit(examples)
-    except Exception, ex:
-      print 'exc, notify that the learner is not active anymore'
-      self._registry.unreg(ComponentType.LEARNER, address)
+    # merging results
+    merged = []
+    for out in outputs:
+      candidate_clients = out.get_stream_clients()
+      if len(candidate_clients) != 0:
+        merged.append(candidate_clients)
+    if len(merged) != 0:
+      print 'some failure occur, should update client list'
+      if len(merged) == 1:
+        new_stream_clients = merged[0]
+      else:
+        new_stream_clients = set(merged[0]).intersection(*merged[1:])
+      # updating clients
+      with self._lock:
+        self._stream_clients_addresses = new_stream_clients
 
 class FeatureGenerator:
   def __init__(self, dao, module_properties):
@@ -77,9 +100,9 @@ class FeatureGenerator:
     self._server_port = module_properties['server_port']
     hostname = socket.gethostname()
     address = Utils.get_address(hostname, self._server_port)
-    self._stream_client_addresses = self._registry.reg(ComponentType.FEATGEN, address)
+    self._stream_clients_addresses = self._registry.reg(ComponentType.FEATGEN, address)
     self._processor = StreamService.Processor(FeatureGeneratorHandler(self._registry, self._parser, 
-                                              self._dao, self._historical_batches, self._stream_client_addresses))
+                                              self._dao, self._historical_batches, self._stream_clients_addresses))
     self._stream_server = Server(self._processor, self._server_port, module_properties['multi_threading'])
 
   def run(self):

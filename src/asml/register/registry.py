@@ -53,14 +53,15 @@ class RegistryHandler:
           if self._learners.has_key(address):
             del self._learners[address]
             updated = True
+            print 'unregistered %s at %s' % (comp_type, address)
         # ugly stuff until I fix the feature generator, not to even communicate to this...
         if updated:
           self._notify(self._deployer, self._learners.keys())
-        return [self._deployer]
+        return self._learners.keys()
       else:
         raise ValueError("only support %s failure, not from %s" % (ComponentType.LEARNER, comp_type))
     except Exception, ex:
-      print 'exc un-registering %s at %s' % (comp_type, address)
+      print 'exc unregistering %s at %s' % (comp_type, address)
 
 
   def _notify(self, to, addresses):
