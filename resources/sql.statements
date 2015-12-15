@@ -3,4 +3,5 @@ update_model: update model set id=%(id)s,timestamp=%(timestamp)s,data=%(data)s w
 get_model: select timestamp, data from model where id = %(id)s;
 save_examples: insert into example (timestamp, data) values {0};
 get_examples: select data from example;
+get_examples_greater_than: select data from example where timestamp > %(timestamp)s;
 delete_examples: delete from example where timestamp <= %(timestamp)s;

@@ -56,7 +56,12 @@ class DB:
     self._conn.commit()
     cur.close()
 
+  # TODO for historical points
   def get_examples(self):
+    pass
+
+  # TODO for historical points
+  def get_examples_greater_than(self, timestamp):
     pass
 
   def delete_examples(self, timestamp):
