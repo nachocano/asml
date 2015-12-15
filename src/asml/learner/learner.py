@@ -9,7 +9,7 @@ from asml.eval.factory import EvaluatorFactory
 
 class LearnerHandler:
   def __init__(self, client, parser, evaluator, dao, clf, classes, warmup_examples, 
-              id, checkpoint, prequential, test):
+              id, checkpoint, prequential, checkpointed, test):
     self._stream_client = client
     self._parser = parser
     self._evaluator = evaluator
@@ -24,7 +24,7 @@ class LearnerHandler:
     if test:
       self._test = test
     self._batches = 0
-    self._checkpointed = False
+    self._checkpointed = checkpointed
     self._is_first = True
     self._streaming_metric = 0
 
@@ -109,8 +109,12 @@ class LearnerHandler:
 class Learner:
   def __init__(self, module_properties, dao, clf):
     self._dao = dao
-    self._clf = clf
     self._id = module_properties['id']
+    self._clf = self._dao.get_model(self._id)
+    self._checkpointed = True
+    if not self._clf:
+      self._clf = clf
+      self._checkpointed = False
     self._warmup_examples = module_properties['warmup_examples']
     self._checkpoint = module_properties['checkpoint']
     self._is_prequential = True if module_properties['eval_mode'] == 'prequential' else False
@@ -122,7 +126,7 @@ class Learner:
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
     self._stream_client = StreamClient(module_properties)
     self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._classes, 
-                              self._warmup_examples, self._id, self._checkpoint, self._is_prequential, self._offline_test)
+                              self._warmup_examples, self._id, self._checkpoint, self._is_prequential, self._checkpointed, self._offline_test)
     self._processor = StreamService.Processor(self._handler)
     self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
 

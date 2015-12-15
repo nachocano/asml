@@ -34,7 +34,10 @@ class DB:
     tupl = cur.fetchone()
     model = None
     if tupl:
-      model = Utils.deserialize(tupl[0])
+     model = Utils.deserialize(tupl[0])
+     print 'retrieved model %s' % id
+    else:
+      print 'not retrieved model %s' % id
     cur.close()
     return model
 
