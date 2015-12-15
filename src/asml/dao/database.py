@@ -42,11 +42,24 @@ class DB:
     return model
 
   def save_examples(self, examples):
-    pass
+    print 'saving examples'
+    cur = self._conn.cursor()
+    args = []
+    for example in examples:
+      timestamp = example.split(' ')[0]
+      args.append((timestamp, example))
+    records_list_template = ','.join(['%s'] * len(args))
+    insert_query = self._sql['save_examples'].format(records_list_template)
+    cur.execute(insert_query, args)
+    self._conn.commit()
+    cur.close()
 
   def get_examples(self):
     pass
 
-  def delete_examples(self):
-    pass
-
+  def delete_examples(self, timestamp):
+    print 'deleting examples prior to %s' % timestamp
+    cur = self._conn.cursor()
+    cur.execute(self._sql['delete_examples'], {'timestamp' : timestamp})
+    self._conn.commit()
+    cur.close()
