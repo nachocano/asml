@@ -27,6 +27,15 @@ class Utils:
     except Exception, ex:
       print 'exc deserializing %s' % ex.message
 
+  @classmethod
+  def get_address(cls, host, port):
+    return '%s:%s' % (host, port)
+
+  @classmethod
+  def get_address_components(cls, address):
+    host, port = address.split(':')
+    port = int(port)
+    return host, port
 
   # hashing utilities (ML4BD class)
   

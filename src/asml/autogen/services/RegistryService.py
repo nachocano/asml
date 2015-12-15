@@ -18,17 +18,19 @@ except:
 
 
 class Iface:
-  def emit(self, data):
+  def reg(self, type, address):
     """
     Parameters:
-     - data
+     - type
+     - address
     """
     pass
 
-  def notify(self, addresses):
+  def unreg(self, type, address):
     """
     Parameters:
-     - addresses
+     - type
+     - address
     """
     pass
 
@@ -40,69 +42,77 @@ class Client(Iface):
       self._oprot = oprot
     self._seqid = 0
 
-  def emit(self, data):
+  def reg(self, type, address):
     """
     Parameters:
-     - data
+     - type
+     - address
     """
-    self.send_emit(data)
-    self.recv_emit()
+    self.send_reg(type, address)
+    return self.recv_reg()
 
-  def send_emit(self, data):
-    self._oprot.writeMessageBegin('emit', TMessageType.CALL, self._seqid)
-    args = emit_args()
-    args.data = data
+  def send_reg(self, type, address):
+    self._oprot.writeMessageBegin('reg', TMessageType.CALL, self._seqid)
+    args = reg_args()
+    args.type = type
+    args.address = address
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_emit(self):
+  def recv_reg(self):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = emit_result()
+    result = reg_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
-    return
+    if result.success is not None:
+      return result.success
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "reg failed: unknown result");
 
-  def notify(self, addresses):
+  def unreg(self, type, address):
     """
     Parameters:
-     - addresses
+     - type
+     - address
     """
-    self.send_notify(addresses)
-    self.recv_notify()
+    self.send_unreg(type, address)
+    return self.recv_unreg()
 
-  def send_notify(self, addresses):
-    self._oprot.writeMessageBegin('notify', TMessageType.CALL, self._seqid)
-    args = notify_args()
-    args.addresses = addresses
+  def send_unreg(self, type, address):
+    self._oprot.writeMessageBegin('unreg', TMessageType.CALL, self._seqid)
+    args = unreg_args()
+    args.type = type
+    args.address = address
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_notify(self):
+  def recv_unreg(self):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = notify_result()
+    result = unreg_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
-    return
+    if result.success is not None:
+      return result.success
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "unreg failed: unknown result");
 
 
 class Processor(Iface, TProcessor):
   def __init__(self, handler):
     self._handler = handler
     self._processMap = {}
-    self._processMap["emit"] = Processor.process_emit
-    self._processMap["notify"] = Processor.process_notify
+    self._processMap["reg"] = Processor.process_reg
+    self._processMap["unreg"] = Processor.process_unreg
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -119,24 +129,24 @@ class Processor(Iface, TProcessor):
       self._processMap[name](self, seqid, iprot, oprot)
     return True
 
-  def process_emit(self, seqid, iprot, oprot):
-    args = emit_args()
+  def process_reg(self, seqid, iprot, oprot):
+    args = reg_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = emit_result()
-    self._handler.emit(args.data)
-    oprot.writeMessageBegin("emit", TMessageType.REPLY, seqid)
+    result = reg_result()
+    result.success = self._handler.reg(args.type, args.address)
+    oprot.writeMessageBegin("reg", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_notify(self, seqid, iprot, oprot):
-    args = notify_args()
+  def process_unreg(self, seqid, iprot, oprot):
+    args = unreg_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = notify_result()
-    self._handler.notify(args.addresses)
-    oprot.writeMessageBegin("notify", TMessageType.REPLY, seqid)
+    result = unreg_result()
+    result.success = self._handler.unreg(args.type, args.address)
+    oprot.writeMessageBegin("unreg", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -144,19 +154,22 @@ class Processor(Iface, TProcessor):
 
 # HELPER FUNCTIONS AND STRUCTURES
 
-class emit_args:
+class reg_args:
   """
   Attributes:
-   - data
+   - type
+   - address
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.LIST, 'data', (TType.STRING,None), None, ), # 1
+    (1, TType.I32, 'type', None, None, ), # 1
+    (2, TType.STRING, 'address', None, None, ), # 2
   )
 
-  def __init__(self, data=None,):
-    self.data = data
+  def __init__(self, type=None, address=None,):
+    self.type = type
+    self.address = address
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -168,12 +181,80 @@ class emit_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I32:
+          self.type = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.address = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('reg_args')
+    if self.type is not None:
+      oprot.writeFieldBegin('type', TType.I32, 1)
+      oprot.writeI32(self.type)
+      oprot.writeFieldEnd()
+    if self.address is not None:
+      oprot.writeFieldBegin('address', TType.STRING, 2)
+      oprot.writeString(self.address)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class reg_result:
+  """
+  Attributes:
+   - success
+  """
+
+  thrift_spec = (
+    (0, TType.LIST, 'success', (TType.STRING,None), None, ), # 0
+  )
+
+  def __init__(self, success=None,):
+    self.success = success
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
         if ftype == TType.LIST:
-          self.data = []
-          (_etype3, _size0) = iprot.readListBegin()
-          for _i4 in xrange(_size0):
-            _elem5 = iprot.readString();
-            self.data.append(_elem5)
+          self.success = []
+          (_etype17, _size14) = iprot.readListBegin()
+          for _i18 in xrange(_size14):
+            _elem19 = iprot.readString();
+            self.success.append(_elem19)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -186,12 +267,12 @@ class emit_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('emit_args')
-    if self.data is not None:
-      oprot.writeFieldBegin('data', TType.LIST, 1)
-      oprot.writeListBegin(TType.STRING, len(self.data))
-      for iter6 in self.data:
-        oprot.writeString(iter6)
+    oprot.writeStructBegin('reg_result')
+    if self.success is not None:
+      oprot.writeFieldBegin('success', TType.LIST, 0)
+      oprot.writeListBegin(TType.STRING, len(self.success))
+      for iter20 in self.success:
+        oprot.writeString(iter20)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -212,61 +293,22 @@ class emit_args:
   def __ne__(self, other):
     return not (self == other)
 
-class emit_result:
-
-  thrift_spec = (
-  )
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('emit_result')
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    return
-
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class notify_args:
+class unreg_args:
   """
   Attributes:
-   - addresses
+   - type
+   - address
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.LIST, 'addresses', (TType.STRING,None), None, ), # 1
+    (1, TType.I32, 'type', None, None, ), # 1
+    (2, TType.STRING, 'address', None, None, ), # 2
   )
 
-  def __init__(self, addresses=None,):
-    self.addresses = addresses
+  def __init__(self, type=None, address=None,):
+    self.type = type
+    self.address = address
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -278,13 +320,13 @@ class notify_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.LIST:
-          self.addresses = []
-          (_etype10, _size7) = iprot.readListBegin()
-          for _i11 in xrange(_size7):
-            _elem12 = iprot.readString();
-            self.addresses.append(_elem12)
-          iprot.readListEnd()
+        if ftype == TType.I32:
+          self.type = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.address = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -296,13 +338,14 @@ class notify_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('notify_args')
-    if self.addresses is not None:
-      oprot.writeFieldBegin('addresses', TType.LIST, 1)
-      oprot.writeListBegin(TType.STRING, len(self.addresses))
-      for iter13 in self.addresses:
-        oprot.writeString(iter13)
-      oprot.writeListEnd()
+    oprot.writeStructBegin('unreg_args')
+    if self.type is not None:
+      oprot.writeFieldBegin('type', TType.I32, 1)
+      oprot.writeI32(self.type)
+      oprot.writeFieldEnd()
+    if self.address is not None:
+      oprot.writeFieldBegin('address', TType.STRING, 2)
+      oprot.writeString(self.address)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -322,10 +365,18 @@ class notify_args:
   def __ne__(self, other):
     return not (self == other)
 
-class notify_result:
+class unreg_result:
+  """
+  Attributes:
+   - success
+  """
 
   thrift_spec = (
+    (0, TType.LIST, 'success', (TType.STRING,None), None, ), # 0
   )
+
+  def __init__(self, success=None,):
+    self.success = success
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -336,6 +387,16 @@ class notify_result:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
+      if fid == 0:
+        if ftype == TType.LIST:
+          self.success = []
+          (_etype24, _size21) = iprot.readListBegin()
+          for _i25 in xrange(_size21):
+            _elem26 = iprot.readString();
+            self.success.append(_elem26)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -345,7 +406,14 @@ class notify_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('notify_result')
+    oprot.writeStructBegin('unreg_result')
+    if self.success is not None:
+      oprot.writeFieldBegin('success', TType.LIST, 0)
+      oprot.writeListBegin(TType.STRING, len(self.success))
+      for iter27 in self.success:
+        oprot.writeString(iter27)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 

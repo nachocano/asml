@@ -1,16 +1,21 @@
 import logging
+import socket
 import numpy as np
 
 from asml.autogen.services import StreamService
+from asml.autogen.services.ttypes import ComponentType
 from asml.network.stream import StreamClient
+from asml.network.registry import RegistryClient
 from asml.network.server import Server
 from asml.parser.factory import ParserFactory
 from asml.eval.factory import EvaluatorFactory
+from asml.util.utils import Utils
 
 class LearnerHandler:
-  def __init__(self, client, parser, evaluator, dao, clf, classes, warmup_examples, 
+  def __init__(self, client_address, registry, parser, evaluator, dao, clf, classes, warmup_examples, 
               id, checkpoint, prequential, checkpointed, test):
-    self._stream_client = client
+    self._stream_client = StreamClient(client_address)
+    self._registry = registry
     self._parser = parser
     self._evaluator = evaluator
     self._dao = dao
@@ -28,6 +33,9 @@ class LearnerHandler:
     self._is_first = True
     self._streaming_metric = 0
 
+
+  def notify(self, addresses):
+    pass
 
   def emit(self, data):
     try:
@@ -124,12 +132,17 @@ class Learner:
     if self._is_prequential == False:
       self._offline_test = self._parser.parse(module_properties['offline_test'])
     self._classes = np.array(map(int, module_properties['classes'].split(',')))
-    self._stream_client = StreamClient(module_properties)
-    self._handler = LearnerHandler(self._stream_client, self._parser, self._evaluator, self._dao, self._clf, self._classes, 
-                              self._warmup_examples, self._id, self._checkpoint, self._is_prequential, self._checkpointed, self._offline_test)
+    self._server_port = module_properties['server_port']
+    self._registry = RegistryClient(module_properties['registry'])
+    hostname = socket.gethostname()
+    address = Utils.get_address(hostname, self._server_port)
+    self._stream_client_address = self._registry.reg(ComponentType.LEARNER, address)[0]
+    self._handler = LearnerHandler(self._stream_client_address, self._registry, self._parser, self._evaluator, self._dao, self._clf, self._classes, 
+                              self._warmup_examples, self._id, self._checkpoint, self._is_prequential, 
+                              self._checkpointed, self._offline_test)
     self._processor = StreamService.Processor(self._handler)
-    self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
+    self._stream_server = Server(self._processor, self._server_port, module_properties['multi_threading'])
 
   def run(self):
-    self._stream_client.open()
+
     self._stream_server.start()

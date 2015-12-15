@@ -16,3 +16,23 @@ except:
   fastbinary = None
 
 
+class ComponentType:
+  DATASTREAM = 1
+  FEATGEN = 2
+  LEARNER = 3
+  DEPLOYER = 4
+
+  _VALUES_TO_NAMES = {
+    1: "DATASTREAM",
+    2: "FEATGEN",
+    3: "LEARNER",
+    4: "DEPLOYER",
+  }
+
+  _NAMES_TO_VALUES = {
+    "DATASTREAM": 1,
+    "FEATGEN": 2,
+    "LEARNER": 3,
+    "DEPLOYER": 4,
+  }
+

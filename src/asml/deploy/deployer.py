@@ -1,21 +1,27 @@
-import time
 import threading
 import logging
+import socket
+from asml.network.registry import RegistryClient
 from asml.autogen.services import StreamService
+from asml.autogen.services.ttypes import ComponentType
 from asml.network.server import Server
 from asml.eval.factory import EvaluatorFactory
+from asml.util.utils import Utils
 from collections import defaultdict
-import logging
 
 class DeployerHandler:
-  def __init__(self, evaluator, no_clients):
+  def __init__(self, evaluator):
     self._evaluator = evaluator
     self._results = defaultdict(list)
     self._predictions = defaultdict(list)
     self._lock = threading.Lock()
-    # TODO create register service and set this up
-    self._no_clients = no_clients
+    # TODO make notify work
+    self._no_clients = 3
     
+  def notify(self, addresses):
+    with self._lock:
+      self._no_clients = len(addresses)
+
   def emit(self, data):
     try:
       id, metric, timestamp = data[0].split(' ')
@@ -40,10 +46,15 @@ class DeployerHandler:
 
 class Deployer:
   def __init__(self, module_properties):
+    self._server_port = module_properties['server_port']
     self._evaluator = EvaluatorFactory.new_evaluator(module_properties)
-    self._no_clients = module_properties['no_clients']
-    self._processor = StreamService.Processor(DeployerHandler(self._evaluator, self._no_clients))
-    self._stream_server = Server(self._processor, module_properties['server_port'], module_properties['multi_threading'])
+    self._registry = RegistryClient(module_properties['registry'])
+    self._processor = StreamService.Processor(DeployerHandler(self._evaluator))
+    self._stream_server = Server(self._processor, self._server_port, module_properties['multi_threading'])
+
 
   def run(self):
+    hostname = socket.gethostname()
+    address = Utils.get_address(hostname, self._server_port)
+    self._registry.reg(ComponentType.DEPLOYER, address)
     self._stream_server.start()

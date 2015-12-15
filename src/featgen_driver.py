@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import argparse
-
 from asml.featgen.feature import FeatureGenerator
 from asml.dao.database import DB
 from asml.util.utils import Utils
