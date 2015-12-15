@@ -9,7 +9,7 @@ enum ComponentType {
 
 service StreamService {
 
-  void emit(1:list<string> data)
+  void emit(1:list<string> data),
 
   void notify(1:list<string> addresses)
 
@@ -17,7 +17,7 @@ service StreamService {
 
 service RegistryService {
   
-  list<string> reg(1:ComponentType type, 2:string address)
+  list<string> reg(1:ComponentType type, 2:string address),
 
   list<string> unreg(1:ComponentType type, 2:string address)
 }

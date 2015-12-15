@@ -15,3 +15,9 @@ class StreamClient(Client):
     print 'emit to %s' % self._address
     client.emit(data)
     self.close(transport)
+
+  def notify(self, addresses):
+    client, transport = self.open()
+    print 'notify to %s' % self._address
+    client.notify(addresses)
+    self.close(transport)

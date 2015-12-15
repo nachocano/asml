@@ -15,12 +15,12 @@ class DeployerHandler:
     self._results = defaultdict(list)
     self._predictions = defaultdict(list)
     self._lock = threading.Lock()
-    # TODO make notify work
-    self._no_clients = 3
+    self._no_clients = 0
     
   def notify(self, addresses):
     with self._lock:
       self._no_clients = len(addresses)
+      print 'updated no_clients %s' % self._no_clients
 
   def emit(self, data):
     try:
