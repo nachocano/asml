@@ -56,13 +56,27 @@ class DB:
     self._conn.commit()
     cur.close()
 
-  # TODO for historical points
   def get_examples(self):
-    pass
+    print 'getting examples'
+    cur = self._conn.cursor()
+    cur.execute(self._sql['get_examples'])
+    rows = cur.fetchall()
+    result = None
+    if rows:
+      result = [ r[0] for r in rows ]
+    cur.close()
+    return result
 
-  # TODO for historical points
   def get_examples_greater_than(self, timestamp):
-    pass
+    print 'getting examples greater than %s' % timestamp
+    cur = self._conn.cursor()
+    cur.execute(self._sql['get_examples_greater_than'], {'timestamp' : timestamp})
+    rows = cur.fetchall()
+    result = None
+    if rows:
+      result = [ r[0] for r in rows ]
+    cur.close()
+    return result
 
   def delete_examples(self, timestamp):
     print 'deleting examples prior to %s' % timestamp

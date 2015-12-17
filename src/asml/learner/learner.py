@@ -31,7 +31,7 @@ class LearnerHandler:
     self._batches = 0
     self._checkpointed = checkpointed
     self._is_first = True
-    self._streaming_metric = 0
+    self._streaming_metric = -1
 
 
   def notify(self, addresses):
@@ -45,6 +45,16 @@ class LearnerHandler:
       if timestamps[-1] < self._warmup_examples:
         # just train
         print 'warming up at %s' % timestamps[-1]
+        if self._is_first:
+          self._clf.partial_fit(X, y, classes=self._classes)
+          self._is_first = False
+        else:
+          streaming_predictions = self._clf.predict_proba(X)
+          self._clf.partial_fit(X, y, classes=self._classes)
+          self._streaming_metric = self._evaluator.stream_evaluate(y, streaming_predictions[:,1])
+      # means that we are still catching up
+      elif self._streaming_metric == -1:
+        print 'catching up...'
         if self._is_first:
           self._clf.partial_fit(X, y, classes=self._classes)
           self._is_first = False
@@ -118,13 +128,6 @@ class Learner:
   def __init__(self, module_properties, dao, clf):
     self._dao = dao
     self._id = module_properties['id']
-    self._clf, timestamp = self._dao.get_model(self._id)
-    self._checkpointed = True
-    print timestamp
-    if not self._clf:
-      # TODO get the historical data and train...
-      self._clf = clf
-      self._checkpointed = False
     self._warmup_examples = module_properties['warmup_examples']
     self._checkpoint = module_properties['checkpoint']
     self._is_prequential = True if module_properties['eval_mode'] == 'prequential' else False
@@ -139,6 +142,34 @@ class Learner:
     hostname = socket.gethostname()
     address = Utils.get_address(hostname, self._server_port)
     self._stream_client_address = self._registry.reg(ComponentType.LEARNER, address)[0]
+
+    ##### Recovery and adding learners on the fly #########
+    self._clf, timestamp = self._dao.get_model(self._id)
+    self._checkpointed = None
+    # if there was a checkpoint, then see if there are some historical points beyond that and train
+    if self._clf:
+      self._checkpointed = True
+      examples = self._dao.get_examples_greater_than(timestamp)
+      if examples:
+        print 'catching up checkpointed model...'
+        X, y, timestamps = self._parser.parse_feature(examples)
+        self._clf.partial_fit(X, y)
+      else:
+        print 'no examples to catch up the checkpointed model'
+        # will use the last metric saved
+    else:
+      self._checkpointed = False
+      self._clf = clf
+      examples = self._dao.get_examples()
+      if examples:
+        print 'catching up new model...'
+        X, y, timestamps = self._parser.parse_feature(examples)
+        self._clf.partial_fit(X, y, self._classes)
+      else:
+        print 'no examples to catch up the new model'
+
+    #######################################        
+
     self._handler = LearnerHandler(self._stream_client_address, self._registry, self._parser, self._evaluator, self._dao, self._clf, self._classes, 
                               self._warmup_examples, self._id, self._checkpoint, self._is_prequential, 
                               self._checkpointed, self._offline_test)

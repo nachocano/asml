@@ -18,8 +18,6 @@ class Parser:
   # for holdout testing data
   def parse(self, filename):
     features = []
-    # send the number of dimensions as the first element
-    features.append('%s' % self.num_features())
     for i, line in enumerate(gzip.open(filename, 'rb')):
       line = '%s\t%s' % (i, line)
       features.append(self.parse_line(line))
@@ -33,8 +31,6 @@ class Parser:
   # generates the features from raw data
   def parse_raw(self, data):
     features = []
-    # send the number of dimensions as the first element
-    features.append('%s' % self.num_features())
     for line in data:
       features.append(self.parse_line(line))
     return features
@@ -42,19 +38,19 @@ class Parser:
   # features into numpy formats
   def parse_feature(self, data):
     timestamps, labels, row, column, value = [], [], [], [], []
-    N = len(data) - 1
-    d = int(data[0])
-    for i in xrange(1,len(data)):
+    N = len(data)
+    d = self.num_features()
+    for i in xrange(N):
       example = data[i].split(' ')
       timestamps.append(long(example[0]))
       labels.append(int(example[1]))
       nelems = len(example[2:])
-      row.extend([i-1] * nelems)
+      row.extend([i] * nelems)
       for elem in example[2:]:
         col, val = elem.split(':')
         column.append(int(col))
         value.append(float(val))
-    X = sparse.csr_matrix((value, (row, column)), shape=(len(data)-1, d))
+    X = sparse.csr_matrix((value, (row, column)), shape=(len(data), d))
     y = np.array(labels)
     timestamps = np.array(timestamps)
     return X, y, timestamps

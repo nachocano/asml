@@ -7,6 +7,7 @@ class CriteoParser(Parser):
     Parser.__init__(self)
     self._no_count_feat = 13
     self._no_cat_feat = 26
+    self._m = 0
     if module_properties.has_key('hash_dimensions'):
       self._m = int(module_properties['hash_dimensions'])
     if module_properties.has_key('max_mins'):

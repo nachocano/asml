@@ -5,9 +5,10 @@ class KddParser(Parser):
   
   def __init__(self, module_properties):
     Parser.__init__(self)
+    self._m = 0
     if module_properties.has_key('hash_dimensions'):
-      self._m = int(module_properties['hash_dimensions'])
-      self._regular_features = 4
+        self._m = int(module_properties['hash_dimensions'])
+    self._regular_features = 4
       
   def num_features(self):
     return self._m + self._regular_features
