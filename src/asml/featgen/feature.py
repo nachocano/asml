@@ -13,18 +13,19 @@ from asml.util.utils import Utils
 class Output:
   def __init__(self, registry):
     self._registry = registry
-    self._stream_clients = []
+    self._unregistered = None
 
-  def get_stream_clients(self):
-    return self._stream_clients
+  def get_unregistered(self):
+    return self._unregistered
 
   def do_emit(self, address, examples):
     try:
       client = StreamClient(address)
       client.emit(examples)
     except Exception, ex:
-      print 'exc, notify that the learner is not active anymore'
-      self._stream_clients = self._registry.unreg(ComponentType.LEARNER, address)
+      print 'exc, notify that the learner at %s is not active anymore' % address
+      self._registry.unreg(ComponentType.LEARNER, address)
+      self._unregistered = address
 
 class FeatureGeneratorHandler:
   def __init__(self, registry, parser, dao, historical_batches, stream_clients_addresses):
@@ -35,12 +36,14 @@ class FeatureGeneratorHandler:
     self._historical_batches = historical_batches
     self._batches = 0
     self._lock = threading.Lock()
+    print 'initial stream clients: %s' % self._stream_clients_addresses
 
   def notify(self, addresses):
     with self._lock:
-      self._stream_clients = []
+      self._stream_clients_addresses = []
       for address in addresses:
         self._stream_clients_addresses.append(address)
+      print 'updated clients: %s' % self._stream_clients_addresses
 
   def emit(self, data):
     try:
@@ -60,36 +63,29 @@ class FeatureGeneratorHandler:
       print 'ex %s' % ex.message
       return
 
-    with self._lock:
-      copy_addresses = copy.deepcopy(self._stream_clients_addresses)
-
     # TODO refactor, ugly stuff ##########################
-    outputs = [Output(self._registry) for x in copy_addresses]
-    threads = []
-    for i, address in enumerate(copy_addresses):
-      thread = threading.Thread(target=outputs[i].do_emit, args=(address, examples))
-      threads.append(thread)
-    # start threads
-    for t in threads:
-      t.start()
-    # wait for thread completion
-    for t in threads:
-      t.join()
-    # merging results
-    merged = []
-    for out in outputs:
-      candidate_clients = out.get_stream_clients()
-      if len(candidate_clients) != 0:
-        merged.append(candidate_clients)
-    if len(merged) != 0:
-      print 'some failure occur, should update client list'
-      if len(merged) == 1:
-        new_stream_clients = merged[0]
-      else:
-        new_stream_clients = set(merged[0]).intersection(*merged[1:])
-      # updating clients
-      with self._lock:
-        self._stream_clients_addresses = new_stream_clients
+    with self._lock:
+      outputs = [Output(self._registry) for x in self._stream_clients_addresses]
+      threads = []
+      for i, address in enumerate(self._stream_clients_addresses):
+        thread = threading.Thread(target=outputs[i].do_emit, args=(address, examples))
+        threads.append(thread)
+      # start threads
+      for t in threads:
+        t.start()
+      # wait for thread completion
+      for t in threads:
+        t.join()
+      # merging results
+      unregistered_clients = []
+      for out in outputs:
+        candidate_unreg = out.get_unregistered()
+        if candidate_unreg:
+          unregistered_clients.append(candidate_unreg)
+      print 'unreg clients %s' % unregistered_clients
+      if len(unregistered_clients) > 0:
+        self._stream_clients_addresses = Utils.diff(self._stream_clients_addresses, unregistered_clients)
+        print 'updated clients: %s' % self._stream_clients_addresses
 
 class FeatureGenerator:
   def __init__(self, dao, module_properties):
