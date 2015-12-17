@@ -82,8 +82,8 @@ class FeatureGeneratorHandler:
         candidate_unreg = out.get_unregistered()
         if candidate_unreg:
           unregistered_clients.append(candidate_unreg)
-      print 'unreg clients %s' % unregistered_clients
       if len(unregistered_clients) > 0:
+        print 'unreg clients %s' % unregistered_clients
         self._stream_clients_addresses = Utils.diff(self._stream_clients_addresses, unregistered_clients)
         print 'updated clients: %s' % self._stream_clients_addresses
 
